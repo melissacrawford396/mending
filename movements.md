@@ -4,7 +4,7 @@ Concrete records for the first five movement types. Shapes match [planning.md](p
 
 Sets, reps, and cooldown are **Proposed**. You described the action, not the numbers. An empty override on your exercise still reads these defaults.
 
-Visuals are keyed by name and empty. Your exercises are what `MyExercise.from(movementType)` would create: same name, no overrides, starred.
+Visuals are keyed by name and empty until a clip exists. How those clips get made is in [planning-unity.md](planning-unity.md). Your exercises are what `MyExercise.from(movementType)` would create: same name, no overrides, starred.
 
 ## Movement types
 

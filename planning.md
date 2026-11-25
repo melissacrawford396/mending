@@ -6,6 +6,8 @@ This sits next to [readme.md](readme.md). The readme is the problem. This file i
 
 ## Product bet
 
+The app is called **Mending**.
+
 A Flutter app. You tap a body area, see the movements for that area, and star the ones you are working on. Each starred movement has a cooldown. After you do it, a countdown runs until it is ready again, like a spell.
 
 **Decided:** Flutter. Android first. The same project can build for iPhone later.
@@ -141,7 +143,7 @@ More can be added to this enum later. Old rows keep the value they were saved wi
 
 Parked on purpose.
 
-**Exercise pictures.** Cartoon stills with flat color and an outline. You describe the movement, we split it into positions, I generate one frame at a time, and you accept or redo it. Accepted frames become a GIF. No 3D, and no realistic people.
+**Exercise pictures.** Moved. Each movement is an animation clip made in a separate Unity project, then exported as a short video. See [planning-unity.md](planning-unity.md). The tappable body map stays a flat cartoon.
 
 **Session notes.** The review row above is the start. Richer follow-up, and warnings based on it, stay later.
 
