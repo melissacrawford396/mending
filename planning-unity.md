@@ -20,7 +20,7 @@ One cute, minimal human, modeled in this project. Body parts are separate shapes
 
 **Decided:** Toes are one partial semicircle on the front of each foot. That piece bends back and forth on its hinge. There are no separate toes.
 
-**Proposed:** Posing is rotating the joint. Do it in the editor, and by dragging the knob while the scene plays. The drag is the check that the attachment holds.
+**Decided:** Posing is rotating the joint. Do it in the editor by rotating the joint, and in Play mode by dragging the blue circle. The drag follows that joint's hinge. Dragging the background turns the view.
 
 **Proposed:** Hands are one shape each. Fingers and a bending spine are the next joints, after this figure poses.
 
