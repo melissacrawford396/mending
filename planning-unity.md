@@ -10,7 +10,7 @@ One cute, minimal human, modeled in this project. Body parts are separate shapes
 
 **Decided:** Start here. This figure is ours. No imported anatomy, no muscle meshes, no tendon simulation.
 
-**Decided:** The joints are visible. A blue circle sits on the pivot, about the same size as the limb, and that circle is what you grab to pose. Each limb is a white/beige squished oval. The end of the oval just barely overlaps the circle, so the seam shows where they meet.
+**Decided:** The joints are visible. A blue circle sits on the pivot, about 30% smaller than the limb. Each limb is a light beige squished oval. The end of the oval just barely overlaps the circle, so the seam shows where they meet.
 
 **Decided:** One generic body. A slightly large head, short thick limbs. A cartoon, and not a portrait of a real person.
 
@@ -20,7 +20,7 @@ One cute, minimal human, modeled in this project. Body parts are separate shapes
 
 **Decided:** Toes are one partial semicircle on the front of each foot. That piece bends back and forth on its hinge. There are no separate toes.
 
-**Decided:** Posing is rotating the joint. Do it in the editor by rotating the joint, and in Play mode by dragging the blue circle. The drag follows that joint's hinge. Dragging the background turns the view.
+**Decided:** Click a joint to highlight it and outline the beige parts that move with it. Drag one of those parts to bend the joint. While it moves, a partial circle shows that joint's range. Dragging the background turns the view.
 
 **Proposed:** Hands are one shape each. Fingers and a bending spine are the next joints, after this figure poses.
 

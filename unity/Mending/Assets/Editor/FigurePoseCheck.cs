@@ -55,6 +55,12 @@ public static class FigurePoseCheck
             figure.Joint("Ankle.R").SetHinge(40f);
             Check(report, ref failed, "foot points down", figure.Part("Toes.R.Shape").position.y < toes.y - 0.02f,
                 "toe y " + toes.y.ToString("0.000") + " -> " + figure.Part("Toes.R.Shape").position.y.ToString("0.000"));
+
+            var knob = figure.Joint("Elbow.R").transform.Find("Elbow.R.Knob");
+            Check(report, ref failed, "joint is smaller than the limb", knob != null && Mathf.Abs(knob.localScale.x - 0.0875f) < 0.001f,
+                "knob scale " + (knob == null ? "missing" : knob.localScale.x.ToString("0.000")));
+            Check(report, ref failed, "limb can be clicked", figure.Part("Forearm.R").GetComponent<BodyPart>() != null,
+                "forearm body part");
         }
         finally
         {

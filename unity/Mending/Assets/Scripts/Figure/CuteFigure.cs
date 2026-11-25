@@ -8,6 +8,7 @@ public class CuteFigure : MonoBehaviour
     const float NeckWidth = 0.1f;
     const float HeadRadius = 0.16f;
     const float Overlap = 0.05f;
+    const float JointScale = 0.7f;
 
     readonly Dictionary<string, JointControl> joints = new Dictionary<string, JointControl>();
     readonly Dictionary<string, Transform> parts = new Dictionary<string, Transform>();
@@ -36,7 +37,7 @@ public class CuteFigure : MonoBehaviour
         joints.Clear();
         parts.Clear();
 
-        limbMaterial = MakeMaterial(new Color(0.94f, 0.86f, 0.74f));
+        limbMaterial = MakeMaterial(new Color(0.98f, 0.95f, 0.91f));
         jointMaterial = MakeMaterial(new Color(0.29f, 0.52f, 0.95f));
         eyeMaterial = MakeMaterial(new Color(0.2f, 0.22f, 0.28f));
 
@@ -107,13 +108,15 @@ public class CuteFigure : MonoBehaviour
         go.transform.localPosition = localPosition;
         var joint = go.AddComponent<JointControl>();
         joint.Define(kind, hingeAxis, hingeLimits, raiseAxis, raiseLimits, restDirection * 0.2f);
+        joint.ballRadius = diameter * JointScale * 0.5f;
         joints.Add(name, joint);
 
         var knob = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         knob.name = name + ".Knob";
         knob.transform.SetParent(go.transform, false);
-        knob.transform.localScale = Vector3.one * diameter;
+        knob.transform.localScale = Vector3.one * diameter * JointScale;
         Paint(knob, jointMaterial);
+        knob.AddComponent<JointKnob>().Bind(joint);
         return go.transform;
     }
 
@@ -121,7 +124,8 @@ public class CuteFigure : MonoBehaviour
     {
         var oval = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         oval.name = name;
-        DestroyNow(oval.GetComponent<Collider>());
+        ReplaceWithMeshCollider(oval);
+        oval.AddComponent<BodyPart>();
         oval.transform.SetParent(joint, false);
         float inset = TipInset(jointDiameter);
         oval.transform.localPosition = direction.normalized * (inset + length * 0.5f);
@@ -153,7 +157,8 @@ public class CuteFigure : MonoBehaviour
 
         var skull = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         skull.name = "Head.Shape";
-        DestroyNow(skull.GetComponent<Collider>());
+        ReplaceWithMeshCollider(skull);
+        skull.AddComponent<BodyPart>();
         skull.transform.SetParent(pivot.transform, false);
         skull.transform.localScale = Vector3.one * HeadRadius * 2f;
         Paint(skull, limbMaterial);
@@ -184,6 +189,10 @@ public class CuteFigure : MonoBehaviour
         filter.sharedMesh = ToeMesh.Create(jointDiameter * 0.7f, jointDiameter * 0.32f, 150f);
         var renderer = go.AddComponent<MeshRenderer>();
         renderer.sharedMaterial = limbMaterial;
+        var collider = go.AddComponent<MeshCollider>();
+        collider.convex = true;
+        collider.sharedMesh = filter.sharedMesh;
+        go.AddComponent<BodyPart>();
         parts.Add(name + ".Shape", go.transform);
     }
 
@@ -212,9 +221,19 @@ public class CuteFigure : MonoBehaviour
         transform.position = position;
     }
 
+    static void ReplaceWithMeshCollider(GameObject go)
+    {
+        var existing = go.GetComponent<Collider>();
+        if (existing != null)
+            DestroyImmediate(existing);
+        var collider = go.AddComponent<MeshCollider>();
+        collider.convex = true;
+        collider.sharedMesh = go.GetComponent<MeshFilter>().sharedMesh;
+    }
+
     static float TipInset(float diameter)
     {
-        return diameter * (0.5f - Overlap);
+        return diameter * JointScale * (0.5f - Overlap);
     }
 
     static float Span(float fromDiameter, float toDiameter, float length)

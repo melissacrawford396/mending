@@ -7,7 +7,9 @@ public class FigureStage : MonoBehaviour
     CuteFigure figure;
     OrbitCamera orbit;
     Camera cam;
-    JointControl grabbed;
+    RangeGuide range;
+    JointControl selected;
+    JointControl dragging;
     bool orbiting;
     GUIStyle hintStyle;
 
@@ -38,6 +40,10 @@ public class FigureStage : MonoBehaviour
         orbit.target = figure.Focus;
         orbit.Snap();
 
+        var guide = new GameObject("RangeGuide");
+        range = guide.AddComponent<RangeGuide>();
+        range.Hide();
+
         RenderSettings.ambientMode = AmbientMode.Flat;
         RenderSettings.ambientLight = new Color(0.62f, 0.59f, 0.54f);
 
@@ -65,27 +71,69 @@ public class FigureStage : MonoBehaviour
         if (mouse.leftButton.wasPressedThisFrame)
         {
             var ray = cam.ScreenPointToRay(mouse.position.ReadValue());
-            if (Physics.Raycast(ray, out var hit, 80f))
+            var hits = Physics.RaycastAll(ray, 80f);
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            JointKnob knob = null;
+            BodyPart part = null;
+            float knobDistance = float.PositiveInfinity;
+            float partDistance = float.PositiveInfinity;
+            foreach (var hit in hits)
             {
-                grabbed = hit.collider.GetComponentInParent<JointControl>();
-                orbiting = grabbed == null;
+                var hitKnob = hit.collider.GetComponent<JointKnob>();
+                if (hitKnob != null && hit.distance < knobDistance)
+                {
+                    knob = hitKnob;
+                    knobDistance = hit.distance;
+                }
+
+                var hitPart = hit.collider.GetComponent<BodyPart>();
+                if (hitPart != null && hit.distance < partDistance)
+                {
+                    part = hitPart;
+                    partDistance = hit.distance;
+                }
+            }
+
+            bool knobFirst = knob != null && knobDistance <= partDistance + 0.012f;
+            if (knobFirst)
+            {
+                Select(knob.Joint);
+                dragging = null;
+                orbiting = false;
+            }
+            else if (part != null && selected != null && part.transform.IsChildOf(selected.transform))
+            {
+                dragging = selected;
+                range.Show(selected);
+                orbiting = false;
+            }
+            else if (hits.Length == 0)
+            {
+                Select(null);
+                dragging = null;
+                orbiting = true;
             }
             else
             {
-                grabbed = null;
-                orbiting = true;
+                dragging = null;
+                orbiting = false;
             }
         }
 
         if (mouse.leftButton.wasReleasedThisFrame)
         {
-            grabbed = null;
+            dragging = null;
+            range.Hide();
             orbiting = false;
         }
 
         var delta = mouse.delta.ReadValue();
-        if (grabbed != null)
-            grabbed.Drag(delta, cam);
+        if (dragging != null)
+        {
+            dragging.Drag(delta, cam);
+            range.Show(dragging);
+        }
         else if (orbiting)
             orbit.AddDelta(delta);
 
@@ -107,6 +155,17 @@ public class FigureStage : MonoBehaviour
         }
 
         GUI.Label(new Rect(0f, Screen.height - 52f, Screen.width, 36f),
-            "Drag a blue joint to bend it. Drag the background to turn.", hintStyle);
+            "Click a blue joint, then drag an outlined part. Drag the background to turn.", hintStyle);
+    }
+
+    void Select(JointControl joint)
+    {
+        selected = joint;
+        foreach (var part in figure.GetComponentsInChildren<BodyPart>(true))
+            part.SetOutlined(joint != null && part.transform.IsChildOf(joint.transform));
+        foreach (var knob in figure.GetComponentsInChildren<JointKnob>(true))
+            knob.SetHighlighted(joint != null && knob.Joint == joint);
+        if (joint == null)
+            range.Hide();
     }
 }

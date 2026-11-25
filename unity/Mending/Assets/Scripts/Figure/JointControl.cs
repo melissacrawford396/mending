@@ -17,6 +17,7 @@ public class JointControl : MonoBehaviour
     public float raiseMax = 160f;
     public float hinge;
     public float raise;
+    public float ballRadius = 0.05f;
     public Vector3 restDirection = Vector3.down;
 
     public void Define(Kind jointKind, Vector3 hingeAxis, Vector2 hingeLimits, Vector3 raiseAxis, Vector2 raiseLimits, Vector3 restDirection)
