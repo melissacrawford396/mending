@@ -1,0 +1,22 @@
+---
+description: Write concise replies — answer first, cut filler
+alwaysApply: true
+---
+
+# Concise writing
+
+Lead with the answer. One idea per sentence. Stop when the point is made.
+
+- Skip preambles, restated questions, and closing recaps.
+- Prefer short paragraphs. Use a list only for parallel items.
+- Cut hedges ("just", "simply", "basically", "I think") and throat-clearing ("It's worth noting").
+- Name the action or result. Leave out the path you did not take.
+- Match length to the question. A yes/no gets a sentence, not a section.
+
+```text
+❌ "Great question. There are a few ways to approach this, but I think the simplest option would be to..."
+✅ "Use a project rule with alwaysApply: true."
+
+❌ "I went ahead and updated the file so that it now writes more concisely, which should help going forward."
+✅ "Added `.cursor/rules/concise-writing.mdc`. It applies to every chat."
+```
