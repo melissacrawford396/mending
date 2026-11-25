@@ -16,7 +16,7 @@ The library covers the whole body. New movements are added the same way as the f
 
 ## Body map
 
-Reference: [assets/body-map.jpg](assets/body-map.jpg).
+Reference: [assets/body-map.jpg](assets/body-map.jpg). The picture is the style and the area split. The figure to build is the jointed cartoon in [planning-unity.md](planning-unity.md). Joints come first. Hover comes after they move.
 
 A cartoon figure made of flat colors and thick outlines. Front and back. No realistic people. The back figure only colors the regions that are unique to the back: upper back and lower back. The rest of that outline stays blank.
 
@@ -143,7 +143,7 @@ More can be added to this enum later. Old rows keep the value they were saved wi
 
 Parked on purpose.
 
-**Exercise pictures.** Moved. Each movement is an animation clip made in a separate Unity project, then exported as a short video. See [planning-unity.md](planning-unity.md). The tappable body map stays a flat cartoon.
+**Exercise pictures.** The Unity project starts with the jointed cartoon figure. Clips come after it can hold a pose. Hover on that same figure is the body map. See [planning-unity.md](planning-unity.md).
 
 **Session notes.** The review row above is the start. Richer follow-up, and warnings based on it, stay later.
 
