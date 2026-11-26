@@ -10,7 +10,7 @@ One cute, minimal human, modeled in this project. Body parts are separate shapes
 
 **Decided:** Start here. This figure is ours. No imported anatomy, no muscle meshes, no tendon simulation.
 
-**Decided:** The joints are visible. A blue circle sits on the pivot, about 30% smaller than the limb. Each limb is a light beige squished oval. The end of the oval just barely overlaps the circle, so the seam shows where they meet.
+**Decided:** The joints are visible. A blue circle sits on the pivot, and the circle is larger on the larger parts. The waist and hips are the biggest, then the shoulders and knees, then the elbows, ankles, and wrists. The toe circles are the smallest. Each limb is a light beige squished oval. The end of the oval just barely overlaps the circle, so the seam shows where they meet.
 
 **Decided:** One generic body. A slightly large head, short thick limbs. A cartoon, and not a portrait of a real person.
 
@@ -18,9 +18,9 @@ One cute, minimal human, modeled in this project. Body parts are separate shapes
 
 **Decided:** A joint only rotates on its own axes. Neck, wrist, elbow, knee, ankle, and toes are a single hinge. Shoulder and hip raise the limb and swing it forward. A drag in Play mode follows those axes.
 
-**Decided:** Toes are one partial semicircle on the front of each foot. That piece bends back and forth on its hinge. There are no separate toes.
+**Decided:** Each foot is longer than it is wide. Five small toes sit on the front of it. Each toe has its own small ball and bends on its own hinge.
 
-**Decided:** Hover a part and it outlines. Click it and the whole part turns around one joint. The upper arm turns around the shoulder, the forearm around the elbow, the hand around the wrist, the head around the neck, the thigh around the hip, the calf around the knee, the foot around the ankle, and the toes around the toe joint. The chest and the hip both turn around the waist ball between them: the chest leans the upper body, and the hip swings the lower body. While a joint moves, a partial circle shows its range. Dragging the background turns the view, including from above. The ground is a pale see-through green, and the background is a light blue.
+**Decided:** Hover a part and it outlines. Click it and the whole part turns around one joint. The upper arm turns around the shoulder, the forearm around the elbow, the hand around the wrist, the head around the neck, the thigh around the hip, the calf around the knee, the foot around the ankle, and each toe around its own joint. The head is large, with white eyes, a black pupil, and a small partial-circle smile. It sits on the neck joint. There is no neck limb. The chest and the hip both turn around the waist ball between them: the chest leans the upper body, and the hip swings the lower body. While a joint moves, a partial circle shows its range. Dragging the background turns the view, including from above. A circle in the top-left corner keeps turning the view while the dot is held out from the center, faster toward the ring. Buttons above it jump to the front, left, right, back, and top. The ground is a pale see-through green, and the background is a light blue.
 
 **Proposed:** Hands are one shape each. Fingers are the next joints, after this figure poses.
 
@@ -37,10 +37,10 @@ The pelvis is the root. A waist joint sits between the pelvis and the torso, wit
 | Wrist, each side | Hand |
 | Hip, each side | Thigh, knee, shin, ankle, foot |
 | Knee, each side | Shin, ankle, foot |
-| Ankle, each side | Foot, toes |
-| Toes, each side | One partial semicircle |
+| Ankle, each side | Foot and all five toes |
+| Toe, five on each foot | That toe |
 
-Parts: head, neck, torso, pelvis, and on each side an upper arm, forearm, hand, thigh, shin, foot, and the toe semicircle. Plus a blue circle at each joint in the table.
+Parts: head, torso, pelvis, and on each side an upper arm, forearm, hand, thigh, shin, foot, and five toes. Plus a blue circle at each joint in the table. The view buttons use dark text.
 
 Pose check: stand, lift one arm out, bend that elbow, bend one knee, point that foot. The limb below the joint follows. The other limbs stay put.
 

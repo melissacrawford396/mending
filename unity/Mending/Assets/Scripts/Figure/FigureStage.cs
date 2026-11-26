@@ -8,11 +8,14 @@ public class FigureStage : MonoBehaviour
     OrbitCamera orbit;
     Camera cam;
     RangeGuide range;
+    OrbitPad pad;
+    ViewBar views;
     BodyPart hovered;
     JointControl highlighted;
     JointControl dragging;
     bool dragLower;
     bool orbiting;
+    bool padDrag;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
@@ -45,8 +48,17 @@ public class FigureStage : MonoBehaviour
         range = guide.AddComponent<RangeGuide>();
         range.Hide();
 
+        pad = gameObject.AddComponent<OrbitPad>();
+        views = gameObject.AddComponent<ViewBar>();
+        views.orbit = orbit;
+
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.74f, 0.78f, 0.82f);
+        RenderSettings.ambientLight = new Color(0.55f, 0.57f, 0.6f);
+        foreach (var sceneLight in FindObjectsByType<Light>(FindObjectsSortMode.None))
+        {
+            if (sceneLight.type == LightType.Directional)
+                sceneLight.intensity = 0.4f;
+        }
 
         var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
         ground.name = "Ground";
@@ -96,10 +108,29 @@ public class FigureStage : MonoBehaviour
             return;
 
         var mousePosition = mouse.position.ReadValue();
+        bool onPad = pad != null && pad.Contains(mousePosition);
+        bool onViews = views != null && views.Contains(mousePosition);
 
         if (mouse.leftButton.wasPressedThisFrame)
         {
-            if (Pick(mousePosition, out var part, out var knob, out _))
+            if (onPad)
+            {
+                padDrag = true;
+                orbiting = false;
+                dragging = null;
+                dragLower = false;
+                range.Hide();
+                ShowLimb(null, null);
+            }
+            else if (onViews)
+            {
+                orbiting = false;
+                dragging = null;
+                dragLower = false;
+                range.Hide();
+                ShowLimb(null, null);
+            }
+            else if (Pick(mousePosition, out var part, out var knob, out _))
             {
                 orbiting = false;
                 dragging = part != null ? part.joint : knob.Joint;
@@ -123,11 +154,18 @@ public class FigureStage : MonoBehaviour
             dragging = null;
             dragLower = false;
             orbiting = false;
+            padDrag = false;
+            pad.Release();
             range.Hide();
         }
 
         var delta = mouse.delta.ReadValue();
-        if (dragging != null && mouse.leftButton.isPressed)
+        if (padDrag && mouse.leftButton.isPressed)
+        {
+            pad.Pull(mousePosition);
+            orbit.Hold(pad.Deflection(), Time.deltaTime);
+        }
+        else if (dragging != null && mouse.leftButton.isPressed)
         {
             if (dragLower)
                 dragging.DragLower(delta, cam);
@@ -138,6 +176,10 @@ public class FigureStage : MonoBehaviour
         else if (orbiting && mouse.leftButton.isPressed)
         {
             orbit.AddDelta(delta);
+        }
+        else if (onPad || onViews)
+        {
+            ShowLimb(null, null);
         }
         else
         {

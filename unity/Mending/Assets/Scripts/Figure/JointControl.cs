@@ -120,8 +120,9 @@ public class JointControl : MonoBehaviour
             ? ScreenMotion(cam, hinge + sample, raise, directionSign) - ScreenMotion(cam, hinge, raise, directionSign)
             : ScreenMotion(cam, hinge, raise + sample, directionSign) - ScreenMotion(cam, hinge, raise, directionSign);
 
+        const float gain = 3f;
         if (motion.sqrMagnitude >= 16f)
-            return Vector2.Dot(pixelDelta, motion) / motion.sqrMagnitude * sample;
+            return Vector2.Dot(pixelDelta, motion) / motion.sqrMagnitude * sample * gain;
 
         var perp = ScreenPerp(cam, swing ? hingeAxis : raiseAxis);
         float pixels = Vector2.Dot(pixelDelta, perp);
@@ -130,7 +131,7 @@ public class JointControl : MonoBehaviour
             : TowardCameraSign(cam, swing, perp, directionSign);
         if (Mathf.Abs(sign) < 0.01f)
             sign = 1f;
-        return pixels * 0.55f * sign;
+        return pixels * 0.55f * sign * gain;
     }
 
     Vector2 ScreenPerp(Camera cam, Vector3 localAxis)

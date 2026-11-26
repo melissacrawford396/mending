@@ -51,14 +51,36 @@ public static class FigurePoseCheck
                 "left hand moved");
             figure.Joint("Shoulder.R").SetRaise(0f);
 
-            var toes = figure.Part("Toes.R.Shape").position;
+            var toes = figure.Part("Toe.R.1").position;
             figure.Joint("Ankle.R").SetHinge(40f);
-            Check(report, ref failed, "foot points down", figure.Part("Toes.R.Shape").position.y < toes.y - 0.02f,
-                "toe y " + toes.y.ToString("0.000") + " -> " + figure.Part("Toes.R.Shape").position.y.ToString("0.000"));
+            Check(report, ref failed, "foot points down", figure.Part("Toe.R.1").position.y < toes.y - 0.02f,
+                "toe y " + toes.y.ToString("0.000") + " -> " + figure.Part("Toe.R.1").position.y.ToString("0.000"));
 
-            var knob = figure.Joint("Elbow.R").transform.Find("Elbow.R.Knob");
-            Check(report, ref failed, "joint is smaller than the limb", knob != null && Mathf.Abs(knob.localScale.x - 0.0875f) < 0.001f,
-                "knob scale " + (knob == null ? "missing" : knob.localScale.x.ToString("0.000")));
+            var shoulderKnob = KnobScale(figure, "Shoulder.R");
+            var elbowKnob = KnobScale(figure, "Elbow.R");
+            var wristKnob = KnobScale(figure, "Wrist.R");
+            var hipKnob = KnobScale(figure, "Hip.R");
+            var kneeKnob = KnobScale(figure, "Knee.R");
+            var ankleKnob = KnobScale(figure, "Ankle.R");
+            var toeKnob = KnobScale(figure, "Toe.R.1");
+            Check(report, ref failed, "joints scale with the body",
+                shoulderKnob > elbowKnob + 0.02f && elbowKnob > wristKnob + 0.015f
+                && hipKnob > kneeKnob + 0.02f && kneeKnob > ankleKnob + 0.015f && ankleKnob > toeKnob + 0.02f,
+                "shoulder " + shoulderKnob.ToString("0.000") + " elbow " + elbowKnob.ToString("0.000")
+                + " wrist " + wristKnob.ToString("0.000") + " hip " + hipKnob.ToString("0.000")
+                + " knee " + kneeKnob.ToString("0.000") + " ankle " + ankleKnob.ToString("0.000")
+                + " toe " + toeKnob.ToString("0.000"));
+            var foot = figure.Part("Foot.R");
+            Check(report, ref failed, "foot is longer than it is wide", foot.localScale.y > foot.localScale.x + 0.05f,
+                "length " + foot.localScale.y.ToString("0.000") + " width " + foot.localScale.x.ToString("0.000"));
+            var eye = figure.Part("Head").Find("Eye.L");
+            var white = eye.Find("White");
+            var pupil = eye.Find("Pupil");
+            Check(report, ref failed, "eyes are white with a black pupil",
+                white != null && pupil != null && white.localScale.x > pupil.localScale.x + 0.02f && white.localScale.z < white.localScale.x * 0.25f,
+                "white " + (white == null ? "missing" : white.localScale.x.ToString("0.000"))
+                + " pupil " + (pupil == null ? "missing" : pupil.localScale.x.ToString("0.000")));
+            Check(report, ref failed, "smile is on the face", figure.Part("Head").Find("Smile") != null, "smile");
             Check(report, ref failed, "limb can be clicked", figure.Part("Forearm.R").GetComponent<BodyPart>() != null,
                 "forearm body part");
 
@@ -70,8 +92,9 @@ public static class FigurePoseCheck
             Check(report, ref failed, "thigh drives the hip", Drives(figure, "Thigh.R", "Hip.R", false), "hip");
             Check(report, ref failed, "calf drives the knee", Drives(figure, "Shin.R", "Knee.R", false), "knee");
             Check(report, ref failed, "foot drives the ankle", Drives(figure, "Foot.R", "Ankle.R", false), "ankle");
-            Check(report, ref failed, "toes drive the toe joint",
-                figure.Part("Toes.R.Shape").GetComponent<BodyPart>().joint == figure.Joint("Toes.R"), "toes");
+            Check(report, ref failed, "toes drive their own joints",
+                Drives(figure, "Toe.R.1", "Toe.R.1", false) && Drives(figure, "Toe.R.5", "Toe.R.5", false)
+                && Drives(figure, "Toe.L.3", "Toe.L.3", false), "toes");
             Check(report, ref failed, "chest drives the waist", Drives(figure, "Torso", "Waist", false), "torso");
             Check(report, ref failed, "hip drives the waist from below", Drives(figure, "Pelvis", "Waist", true), "pelvis");
 
@@ -106,9 +129,9 @@ public static class FigurePoseCheck
 
             Check(report, ref failed, "joints are numbered",
                 figure.Joint("Neck").number == 1 && figure.Joint("Waist").number == 2
-                && figure.Joint("Shoulder.L").number == 3 && figure.Joint("Toes.R").number == 16,
+                && figure.Joint("Shoulder.L").number == 3 && figure.Joint("Toe.R.5").number == 24,
                 "neck " + figure.Joint("Neck").number + " waist " + figure.Joint("Waist").number
-                + " shoulder " + figure.Joint("Shoulder.L").number + " toes " + figure.Joint("Toes.R").number);
+                + " shoulder " + figure.Joint("Shoulder.L").number + " little toe " + figure.Joint("Toe.R.5").number);
         }
         finally
         {
@@ -120,6 +143,12 @@ public static class FigurePoseCheck
         }
 
         EditorApplication.Exit(failed ? 1 : 0);
+    }
+
+    static float KnobScale(CuteFigure figure, string joint)
+    {
+        var knob = figure.Joint(joint).transform.Find(joint + ".Knob");
+        return knob == null ? 0f : knob.localScale.x;
     }
 
     static bool Drives(CuteFigure figure, string part, string joint, bool movesParent)
