@@ -64,7 +64,7 @@ Hover to find an exercise, and the clips in [movements.md](movements.md), both u
 | 4 | Ankle stretch | Split stance. The body lowers and stays upright so both feet stay on the ground. Front knee bends, back heel stays down, hold. The body rises, then the other side lowers the same way. | Both hips, both knees, and the back ankle. Only that ankle is highlighted. |
 | 5 | Arch roll | The right foot slides over a red ball that starts at the toe end. The ball rolls forward as the foot passes over it, and stays under the yellow sole. The underside of that foot is yellow. | A ball prop. The right hip and knee slide that foot over the ball. |
 
-**Proposed:** When those five read clearly in Play mode, record each one from a fixed camera. Same figure, same light. One short video per movement name. That file is what the visuals row in [movements.md](movements.md) stores.
+**Decided:** Each movement has one short video from its fixed camera. Same figure, same light. The files live in `visuals/` and the visuals row in [movements.md](movements.md) points at them.
 
 Hover to find an exercise stays later. The areas in [planning.md](planning.md) live on this figure. A shape starts light and turns blue on hover. Paired sides highlight together. A click opens the movements for that area.
 

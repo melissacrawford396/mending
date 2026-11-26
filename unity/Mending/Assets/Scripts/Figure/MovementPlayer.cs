@@ -68,6 +68,32 @@ public class MovementPlayer : MonoBehaviour
         Select(next);
     }
 
+    public int ClipCount
+    {
+        get { return clips == null ? 0 : clips.Length; }
+    }
+
+    public string ClipName
+    {
+        get { return clips[index].name; }
+    }
+
+    public float ClipDuration
+    {
+        get { return clips[index].Duration; }
+    }
+
+    public void PoseAt(float clipTime)
+    {
+        var clip = clips[index];
+        float time = Mathf.Clamp(clipTime, 0f, clip.Duration);
+        Apply(clip.Sample(time));
+        if (clip.name == "Ankle stretch")
+            MarkBackAnkle();
+        if (clip.name == "Arch roll")
+            RollBall();
+    }
+
     public void Select(int next)
     {
         index = Mathf.Clamp(next, 0, clips.Length - 1);

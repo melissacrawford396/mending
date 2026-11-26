@@ -10,7 +10,7 @@ The app is called **Mending**.
 
 A Flutter app. You tap a body area, see the movements for that area, and star the ones you are working on. Each starred movement has a cooldown. After you do it, a countdown runs until it is ready again, like a spell.
 
-**Decided:** Flutter. Android first. The same project can build for iPhone later.
+**Decided:** Flutter. Android first. The same project can build for iPhone later. The project is [flutter/](flutter/).
 
 The library covers the whole body. New movements are added the same way as the first.
 
@@ -20,7 +20,9 @@ Reference: [assets/body-map.jpg](assets/body-map.jpg). The picture is the style 
 
 A cartoon figure made of flat colors and thick outlines. Front and back. No realistic people. The back figure only colors the regions that are unique to the back: upper back and lower back. The rest of that outline stays blank.
 
-The file uses color so the split is easy to read. In the app every shape starts white and turns blue on hover. Paired sides share one area, so both arms, both wrists, both hands, both ankles, and both feet highlight together. Click opens the movements for that area. A finger press uses the same blue state, then the tap opens the list.
+The file uses color so the split is easy to read. In the app every shape starts white and turns blue on hover. Paired sides share one area, so both arms, both wrists, both hands, both ankles, and both feet highlight together.
+
+Hover fills a panel on the right with that area's movements, starred first. The list is greyed out and does not take clicks yet. Click selects the area: the figure shrinks to a faded outline, the selected area stays blue, and the panel becomes clickable. Click the area again, or close the panel, to go back. On a narrow screen the panel opens under the figure. A finger press uses the same blue state, then the tap selects.
 
 `BodyArea` is a fixed enum.
 
@@ -74,7 +76,7 @@ Keyed by the movement type name. Holds how that movement is drawn. Empty until f
 | Field | Meaning |
 | --- | --- |
 | Movement name | Key. The movement type name |
-| Representation | Later: the frames or GIF |
+| Representation | Later: the frames or GIF. The app shows a placeholder until this exists |
 
 ### My exercises
 
@@ -93,7 +95,7 @@ This is a reference plus optional overrides. A factory creates it: `MyExercise.f
 
 Effective sets are the override when it is set, otherwise the movement type default. Reps and cooldown resolve the same way.
 
-The countdown uses that effective cooldown and the latest completion time in the log. At zero the movement is ready. No log row means ready. Completing it starts the countdown from that time. Doing it again early restarts the countdown.
+The countdown uses that effective cooldown and the latest completion time in the log. Cooldown N lasts N × 24 hours from that time. At zero the movement is ready. No log row means ready. Completing it starts the countdown from that time. Doing it again early restarts the countdown.
 
 You work from the starred rows. Each one shows its countdown. The ones whose cooldown has finished are ready.
 
@@ -155,4 +157,4 @@ Parked on purpose.
 
 ## Open
 
-Confirm the proposed sets, reps, and cooldowns in [movements.md](movements.md).
+None. Sets, reps, and cooldowns in [movements.md](movements.md) are decided.

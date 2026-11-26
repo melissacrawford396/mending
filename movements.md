@@ -2,7 +2,7 @@
 
 Concrete records for the first five movement types. Shapes match [planning.md](planning.md).
 
-Sets, reps, and cooldown are **Proposed**. You described the action, not the numbers. An empty override on your exercise still reads these defaults.
+Sets, reps, and cooldown are **Decided**. An empty override on your exercise still reads these defaults.
 
 Visuals are keyed by name and empty until a clip exists. How those clips get made is in [planning-unity.md](planning-unity.md). Your exercises are what `MyExercise.from(movementType)` would create: same name, no overrides, starred.
 
@@ -75,11 +75,11 @@ Sets mean one held stretch per side.
 
 | Movement name | Representation |
 | --- | --- |
-| Arch roll | |
-| Toe flex | |
-| Small shoulder circles | |
-| Large arm circles | |
-| Ankle stretch | |
+| Arch roll | visuals/arch-roll.mp4 |
+| Toe flex | visuals/toe-flex.mp4 |
+| Small shoulder circles | visuals/small-shoulder-circles.mp4 |
+| Large arm circles | visuals/large-arm-circles.mp4 |
+| Ankle stretch | visuals/ankle-stretch.mp4 |
 
 ## My exercises
 
