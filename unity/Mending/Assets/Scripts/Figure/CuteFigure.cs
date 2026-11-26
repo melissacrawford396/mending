@@ -38,7 +38,7 @@ public class CuteFigure : MonoBehaviour
         joints.Clear();
         parts.Clear();
 
-        limbMaterial = MakeMaterial(new Color(0.98f, 0.95f, 0.91f));
+        limbMaterial = MakeMaterial(new Color(0.80f, 0.90f, 0.97f));
         jointMaterial = MakeMaterial(new Color(0.29f, 0.52f, 0.95f));
         eyeMaterial = MakeFlat(new Color(0.08f, 0.08f, 0.09f));
         sparkleMaterial = MakeFlat(new Color(0.96f, 0.97f, 0.98f));
@@ -79,14 +79,16 @@ public class CuteFigure : MonoBehaviour
         const float shoulderDiameter = 0.16f;
         const float elbowDiameter = 0.11f;
         const float wristDiameter = 0.075f;
+        const float upperLen = 0.27f;
+        const float foreLen = 0.24f;
         var shoulder = AddJoint("Shoulder." + Side(left), chest, new Vector3(0.22f * side, torsoLocalY + 0.08f, 0f), shoulderDiameter,
             JointControl.Kind.TwoAxis, Vector3.left, new Vector2(-30f, 170f), raiseAxis, new Vector2(0f, 160f), Vector3.down);
-        AddLimb(shoulder, "UpperArm." + Side(left), Vector3.down, 0.18f, shoulderDiameter, Arm, Arm * 0.72f);
-        var elbow = AddJoint("Elbow." + Side(left), shoulder, Vector3.down * Span(shoulderDiameter, elbowDiameter, 0.18f), elbowDiameter,
+        AddLimb(shoulder, "UpperArm." + Side(left), Vector3.down, upperLen, shoulderDiameter, Arm, Arm * 0.72f);
+        var elbow = AddJoint("Elbow." + Side(left), shoulder, Vector3.down * Span(shoulderDiameter, elbowDiameter, upperLen), elbowDiameter,
             JointControl.Kind.Hinge, Vector3.left, new Vector2(0f, 150f), Vector3.forward, Vector2.zero, Vector3.down);
 
-        AddLimb(elbow, "Forearm." + Side(left), Vector3.down, 0.16f, elbowDiameter, Arm, Arm * 0.72f);
-        var wrist = AddJoint("Wrist." + Side(left), elbow, Vector3.down * Span(elbowDiameter, wristDiameter, 0.16f), wristDiameter,
+        AddLimb(elbow, "Forearm." + Side(left), Vector3.down, foreLen, elbowDiameter, Arm * 0.8f, Arm * 0.72f * 0.8f);
+        var wrist = AddJoint("Wrist." + Side(left), elbow, Vector3.down * Span(elbowDiameter, wristDiameter, foreLen), wristDiameter,
             JointControl.Kind.Hinge, Vector3.left, new Vector2(-30f, 50f), Vector3.forward, Vector2.zero, Vector3.down);
         AddLimb(wrist, "Hand." + Side(left), Vector3.down, 0.1f, wristDiameter, Arm, Arm * 0.62f);
 
@@ -106,17 +108,19 @@ public class CuteFigure : MonoBehaviour
         const float ankleDiameter = 0.09f;
         const float footLength = 0.24f;
         const float footWidth = 0.12f;
+        const float thighLen = 0.3f;
+        const float shinLen = 0.27f;
         var hip = AddJoint("Hip." + Side(left), transform, new Vector3(0.11f * side, -0.02f, 0f), hipDiameter,
             JointControl.Kind.TwoAxis, Vector3.left, new Vector2(-20f, 100f), raiseAxis, new Vector2(0f, 60f), Vector3.down);
-        AddLimb(hip, "Thigh." + Side(left), Vector3.down, 0.2f, hipDiameter, Leg, Leg * 0.75f);
-        var knee = AddJoint("Knee." + Side(left), hip, Vector3.down * Span(hipDiameter, kneeDiameter, 0.2f), kneeDiameter,
+        AddLimb(hip, "Thigh." + Side(left), Vector3.down, thighLen, hipDiameter, Leg * 1.1f, Leg * 0.75f * 1.1f);
+        var knee = AddJoint("Knee." + Side(left), hip, Vector3.down * Span(hipDiameter, kneeDiameter, thighLen), kneeDiameter,
             JointControl.Kind.Hinge, Vector3.right, new Vector2(0f, 150f), Vector3.forward, Vector2.zero, Vector3.down);
 
-        AddLimb(knee, "Shin." + Side(left), Vector3.down, 0.18f, kneeDiameter, Leg, Leg * 0.72f);
-        var ankle = AddJoint("Ankle." + Side(left), knee, Vector3.down * Span(kneeDiameter, ankleDiameter, 0.18f), ankleDiameter,
+        AddLimb(knee, "Shin." + Side(left), Vector3.down, shinLen, kneeDiameter, Leg * 0.8f, Leg * 0.72f * 0.8f);
+        var ankle = AddJoint("Ankle." + Side(left), knee, Vector3.down * Span(kneeDiameter, ankleDiameter, shinLen), ankleDiameter,
             JointControl.Kind.Hinge, Vector3.right, new Vector2(-25f, 50f), Vector3.forward, Vector2.zero, Vector3.forward);
 
-        AddLimb(ankle, "Foot." + Side(left), Vector3.forward, footLength, ankleDiameter, footWidth, 0.04f, true);
+        AddFoot(ankle, "Foot." + Side(left), footLength, ankleDiameter, footWidth, 0.08f * (2f / 3f));
         AddToes(ankle, left, ankleDiameter, footLength);
 
         string sideName = left ? "L" : "R";
@@ -158,6 +162,90 @@ public class CuteFigure : MonoBehaviour
         return go.transform;
     }
 
+    void AddFoot(Transform ankle, string name, float length, float jointDiameter, float width, float depth)
+    {
+        var foot = new GameObject(name);
+        foot.AddComponent<MeshFilter>().sharedMesh = FootShape();
+        foot.AddComponent<MeshRenderer>();
+        ReplaceWithBoxCollider(foot);
+        foot.AddComponent<BodyPart>().Bind(ankle.GetComponent<JointControl>());
+        foot.transform.SetParent(ankle, false);
+        float inset = TipInset(jointDiameter);
+        foot.transform.localPosition = Vector3.forward * (inset + length * 0.5f);
+        foot.transform.localRotation = AlignLongAxis(Vector3.forward, Vector3.up);
+        foot.transform.localScale = new Vector3(width, length, depth);
+        Paint(foot, limbMaterial);
+        foot.GetComponent<Renderer>().sharedMaterials = new[] { limbMaterial, limbMaterial };
+        FigureLook.AttachEdge(foot);
+        parts.Add(name, foot.transform);
+    }
+
+    static Mesh footShape;
+
+    static Mesh FootShape()
+    {
+        if (footShape != null)
+            return footShape;
+
+        float[] along = { -0.5f, -0.28f, 0.02f, 0.28f, 0.5f };
+        float[] halfWidth = { 0.24f, 0.32f, 0.4f, 0.5f, 0.47f };
+        const int around = 14;
+        var vertices = new List<Vector3>();
+        var top = new List<int>();
+        var bottom = new List<int>();
+        for (int station = 0; station < along.Length; station++)
+        {
+            for (int step = 0; step < around; step++)
+            {
+                float angle = step / (float)around * Mathf.PI * 2f;
+                vertices.Add(new Vector3(Mathf.Cos(angle) * halfWidth[station], along[station], Mathf.Sin(angle) * 0.5f));
+            }
+        }
+
+        for (int station = 0; station < along.Length - 1; station++)
+        {
+            for (int step = 0; step < around; step++)
+            {
+                int next = (step + 1) % around;
+                int a = station * around + step;
+                int b = station * around + next;
+                int c = (station + 1) * around + step;
+                int d = (station + 1) * around + next;
+                AddFootFace(vertices, top, bottom, a, c, b);
+                AddFootFace(vertices, top, bottom, b, c, d);
+            }
+        }
+
+        int heel = vertices.Count;
+        vertices.Add(new Vector3(0f, along[0], 0f));
+        for (int step = 0; step < around; step++)
+            AddFootFace(vertices, top, bottom, heel, step, (step + 1) % around);
+
+        int toe = vertices.Count;
+        int ring = (along.Length - 1) * around;
+        vertices.Add(new Vector3(0f, along[along.Length - 1], 0f));
+        for (int step = 0; step < around; step++)
+            AddFootFace(vertices, top, bottom, toe, ring + (step + 1) % around, ring + step);
+
+        footShape = new Mesh { name = "Foot" };
+        footShape.SetVertices(vertices);
+        footShape.subMeshCount = 2;
+        footShape.SetTriangles(top, 0);
+        footShape.SetTriangles(bottom, 1);
+        footShape.RecalculateNormals();
+        footShape.RecalculateBounds();
+        return footShape;
+    }
+
+    static void AddFootFace(List<Vector3> vertices, List<int> top, List<int> bottom, int a, int b, int c)
+    {
+        float height = vertices[a].z + vertices[b].z + vertices[c].z;
+        var faces = height > 0f ? bottom : top;
+        faces.Add(a);
+        faces.Add(b);
+        faces.Add(c);
+    }
+
     void AddLimb(Transform joint, string name, Vector3 direction, float length, float jointDiameter, float width, float depth, bool box = false)
     {
         var oval = GameObject.CreatePrimitive(box ? PrimitiveType.Cube : PrimitiveType.Sphere);
@@ -170,6 +258,7 @@ public class CuteFigure : MonoBehaviour
         oval.transform.localRotation = AlignLongAxis(direction, Vector3.up);
         oval.transform.localScale = new Vector3(width, length, depth);
         Paint(oval, limbMaterial);
+        FigureLook.AttachEdge(oval, name.StartsWith("Toe."));
         parts.Add(name, oval.transform);
     }
 
@@ -183,6 +272,7 @@ public class CuteFigure : MonoBehaviour
         oval.transform.localPosition = localPosition;
         oval.transform.localScale = scale;
         Paint(oval, limbMaterial);
+        FigureLook.AttachEdge(oval);
         parts.Add(name, oval.transform);
     }
 
@@ -199,6 +289,7 @@ public class CuteFigure : MonoBehaviour
         skull.transform.SetParent(pivot.transform, false);
         skull.transform.localScale = Vector3.one * HeadRadius * 2f;
         Paint(skull, limbMaterial);
+        FigureLook.AttachEdge(skull);
 
         AddEye(pivot.transform, -1f);
         AddEye(pivot.transform, 1f);
@@ -214,9 +305,8 @@ public class CuteFigure : MonoBehaviour
         var eye = new GameObject(side < 0f ? "Eye.L" : "Eye.R");
         eye.transform.SetParent(head, false);
         eye.transform.localPosition = new Vector3(x, y, surface + 0.012f);
-        AddDisc(eye.transform, "Ring", 0.118f, 0f, eyeMaterial);
-        AddDisc(eye.transform, "White", 0.1f, 0.006f, sparkleMaterial);
-        AddDisc(eye.transform, "Pupil", 0.055f, 0.012f, eyeMaterial);
+        AddDisc(eye.transform, "White", 0.118f, 0f, sparkleMaterial);
+        AddDisc(eye.transform, "Pupil", 0.055f, 0.008f, eyeMaterial);
     }
 
     void AddDisc(Transform parent, string name, float diameter, float forward, Material material)
@@ -289,17 +379,16 @@ public class CuteFigure : MonoBehaviour
     {
         float medial = left ? 1f : -1f;
         float front = TipInset(ankleDiameter) + footLength;
-        float[] fromMedial = { 0.04f, 0.02f, 0f, -0.02f, -0.04f };
-        float[] width = { 0.024f, 0.018f, 0.016f, 0.015f, 0.014f };
-        const float jointSize = 0.016f;
-        const float toeLength = 0.02f;
+        float[] fromMedial = { 0.044f, 0.02f, -0.002f, -0.022f, -0.04f };
+        float[] width = { 0.02f, 0.018f, 0.016f, 0.015f, 0.014f };
+        const float jointSize = 0.012f;
         string sideName = left ? "L" : "R";
         int first = left ? 12 : 20;
         for (int i = 0; i < 5; i++)
         {
-            var toe = AddJoint("Toe." + Side(left) + "." + (i + 1), ankle, new Vector3(medial * fromMedial[i], -0.006f, front - 0.004f), jointSize,
+            var toe = AddJoint("Toe." + Side(left) + "." + (i + 1), ankle, new Vector3(medial * fromMedial[i], -0.016f, front + 0.004f), jointSize,
                 JointControl.Kind.Hinge, Vector3.right, new Vector2(-20f, 40f), Vector3.forward, Vector2.zero, Vector3.forward);
-            AddLimb(toe, "Toe." + Side(left) + "." + (i + 1), Vector3.forward, toeLength, jointSize, width[i], 0.014f, true);
+            AddLimb(toe, "Toe." + Side(left) + "." + (i + 1), Vector3.forward, width[i] * 1.15f, jointSize, width[i], width[i] * 0.85f);
             Tag(toe, first + i, sideName + " Toe " + (i + 1));
         }
     }

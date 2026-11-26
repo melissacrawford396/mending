@@ -17,7 +17,8 @@ Shader "Mending/Outline"
         {
             Name "Outline"
             Cull Front
-            ZWrite On
+            ZWrite Off
+            ZTest LEqual
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -46,6 +47,8 @@ Shader "Mending/Outline"
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 float3 normalWS = normalize(TransformObjectToWorldNormal(input.normalOS));
                 positionWS += normalWS * _Width;
+                float3 toCamera = _WorldSpaceCameraPos - positionWS;
+                positionWS += normalize(toCamera) * 0.004;
                 output.positionCS = TransformWorldToHClip(positionWS);
                 return output;
             }

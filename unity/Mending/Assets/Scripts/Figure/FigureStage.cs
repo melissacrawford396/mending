@@ -10,6 +10,8 @@ public class FigureStage : MonoBehaviour
     RangeGuide range;
     OrbitPad pad;
     ViewBar views;
+    MovementPlayer player;
+    MovementBar movements;
     BodyPart hovered;
     JointControl highlighted;
     JointControl dragging;
@@ -34,7 +36,7 @@ public class FigureStage : MonoBehaviour
 
         cam = Camera.main;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.85f, 0.93f, 0.99f);
+        cam.backgroundColor = new Color(0.83f, 0.74f, 0.64f);
         cam.fieldOfView = 32f;
         cam.nearClipPlane = 0.05f;
 
@@ -51,6 +53,11 @@ public class FigureStage : MonoBehaviour
         pad = gameObject.AddComponent<OrbitPad>();
         views = gameObject.AddComponent<ViewBar>();
         views.orbit = orbit;
+        pad.views = views;
+        player = gameObject.AddComponent<MovementPlayer>();
+        player.Bind(figure, orbit);
+        movements = gameObject.AddComponent<MovementBar>();
+        movements.player = player;
 
         RenderSettings.ambientMode = AmbientMode.Flat;
         RenderSettings.ambientLight = new Color(0.55f, 0.57f, 0.6f);
@@ -74,7 +81,7 @@ public class FigureStage : MonoBehaviour
         if (shader == null)
             shader = Shader.Find("Standard");
         var material = new Material(shader);
-        var color = new Color(0.68f, 0.9f, 0.66f, 0.24f);
+        var color = new Color(0.76f, 0.87f, 0.66f, 0.92f);
         if (material.HasProperty("_BaseColor"))
             material.SetColor("_BaseColor", color);
         if (material.HasProperty("_Color"))
@@ -108,8 +115,19 @@ public class FigureStage : MonoBehaviour
             return;
 
         var mousePosition = mouse.position.ReadValue();
+        if (views != null && !views.ControlsVisible && padDrag)
+        {
+            padDrag = false;
+            pad.Release();
+        }
+
         bool onPad = pad != null && pad.Contains(mousePosition);
         bool onViews = views != null && views.Contains(mousePosition);
+        bool onMoves = movements != null && movements.Contains(mousePosition);
+        bool playing = player != null && player.IsPlaying;
+
+        if (mouse.leftButton.wasPressedThisFrame && !onMoves && movements != null)
+            movements.Close();
 
         if (mouse.leftButton.wasPressedThisFrame)
         {
@@ -122,7 +140,7 @@ public class FigureStage : MonoBehaviour
                 range.Hide();
                 ShowLimb(null, null);
             }
-            else if (onViews)
+            else if (onViews || onMoves)
             {
                 orbiting = false;
                 dragging = null;
@@ -130,7 +148,7 @@ public class FigureStage : MonoBehaviour
                 range.Hide();
                 ShowLimb(null, null);
             }
-            else if (Pick(mousePosition, out var part, out var knob, out _))
+            else if (!playing && Pick(mousePosition, out var part, out var knob, out _))
             {
                 orbiting = false;
                 dragging = part != null ? part.joint : knob.Joint;
@@ -165,7 +183,7 @@ public class FigureStage : MonoBehaviour
             pad.Pull(mousePosition);
             orbit.Hold(pad.Deflection(), Time.deltaTime);
         }
-        else if (dragging != null && mouse.leftButton.isPressed)
+        else if (!playing && dragging != null && mouse.leftButton.isPressed)
         {
             if (dragLower)
                 dragging.DragLower(delta, cam);
@@ -177,7 +195,7 @@ public class FigureStage : MonoBehaviour
         {
             orbit.AddDelta(delta);
         }
-        else if (onPad || onViews)
+        else if (onPad || onViews || onMoves)
         {
             ShowLimb(null, null);
         }
@@ -185,6 +203,9 @@ public class FigureStage : MonoBehaviour
         {
             Hover(mousePosition);
         }
+
+        if (player != null)
+            player.Tick(Time.deltaTime);
 
         float scroll = mouse.scroll.ReadValue().y;
         if (Mathf.Abs(scroll) > 0.01f)

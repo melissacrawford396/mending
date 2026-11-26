@@ -3,11 +3,13 @@ using UnityEngine;
 public class ViewBar : MonoBehaviour
 {
     public OrbitCamera orbit;
+    public bool ControlsVisible;
 
     const float Height = 26f;
     const float Gap = 4f;
     const float Left = 20f;
     const float Top = 20f;
+    const float ToggleWidth = 72f;
 
     static readonly View[] Views =
     {
@@ -18,12 +20,12 @@ public class ViewBar : MonoBehaviour
         new View("Top", 44f, 0f, -89f)
     };
 
-    GUIStyle style;
-
     public bool Contains(Vector2 mouseFromBottom)
     {
         var gui = new Vector2(mouseFromBottom.x, Screen.height - mouseFromBottom.y);
-        return Row().Contains(gui);
+        if (ToggleRect().Contains(gui))
+            return true;
+        return ControlsVisible && Row().Contains(gui);
     }
 
     void OnGUI()
@@ -31,19 +33,24 @@ public class ViewBar : MonoBehaviour
         if (orbit == null)
             return;
 
-        EnsureStyle();
+        if (FigureButtons.Button(ToggleRect(), ControlsVisible ? "Hide" : "Views"))
+            ControlsVisible = !ControlsVisible;
+        if (!ControlsVisible)
+            return;
+
         var row = Row();
         float x = row.x;
-        var previous = GUI.backgroundColor;
-        GUI.backgroundColor = new Color(0.78f, 0.9f, 0.98f);
         foreach (var view in Views)
         {
-            if (GUI.Button(new Rect(x, row.y, view.Width, Height), view.Label, style))
+            if (FigureButtons.Button(new Rect(x, row.y, view.Width, Height), view.Label))
                 orbit.Look(view.Yaw, view.Pitch);
             x += view.Width + Gap;
         }
+    }
 
-        GUI.backgroundColor = previous;
+    Rect ToggleRect()
+    {
+        return new Rect(Left, Top, ToggleWidth, Height);
     }
 
     Rect Row()
@@ -52,28 +59,7 @@ public class ViewBar : MonoBehaviour
         foreach (var view in Views)
             width += view.Width;
         width += Gap * (Views.Length - 1);
-        return new Rect(Left, Top, width, Height);
-    }
-
-    void EnsureStyle()
-    {
-        if (style != null)
-            return;
-
-        style = new GUIStyle(GUI.skin.button)
-        {
-            fontSize = 12,
-            alignment = TextAnchor.MiddleCenter
-        };
-        var ink = Color.black;
-        style.normal.textColor = ink;
-        style.hover.textColor = ink;
-        style.active.textColor = ink;
-        style.focused.textColor = ink;
-        style.onNormal.textColor = ink;
-        style.onHover.textColor = ink;
-        style.onActive.textColor = ink;
-        style.onFocused.textColor = ink;
+        return new Rect(Left + ToggleWidth + Gap, Top, width, Height);
     }
 
     struct View

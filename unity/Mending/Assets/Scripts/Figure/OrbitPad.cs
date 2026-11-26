@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class OrbitPad : MonoBehaviour
 {
+    public ViewBar views;
+
     const float Size = 96f;
     const float KnobSize = 22f;
     const float Margin = 20f;
@@ -14,6 +16,8 @@ public class OrbitPad : MonoBehaviour
 
     public bool Contains(Vector2 mouseFromBottom)
     {
+        if (!Shown())
+            return false;
         return (ToGui(mouseFromBottom) - Center()).sqrMagnitude <= Size * Size * 0.25f;
     }
 
@@ -52,8 +56,16 @@ public class OrbitPad : MonoBehaviour
         pull = Vector2.zero;
     }
 
+    bool Shown()
+    {
+        return views == null || views.ControlsVisible;
+    }
+
     void OnGUI()
     {
+        if (!Shown())
+            return;
+
         EnsureTextures();
         var center = Center();
         var previous = GUI.color;

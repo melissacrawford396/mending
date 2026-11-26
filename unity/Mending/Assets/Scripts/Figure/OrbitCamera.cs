@@ -6,6 +6,7 @@ public class OrbitCamera : MonoBehaviour
     public float distance = 2.7f;
     public float yaw = 18f;
     public float pitch = -18f;
+    public Vector3 lookOffset;
 
     const float PitchMin = -89f;
     const float PitchMax = 32f;
@@ -26,6 +27,16 @@ public class OrbitCamera : MonoBehaviour
     {
         yaw = nextYaw;
         pitch = Mathf.Clamp(nextPitch, PitchMin, PitchMax);
+        lookOffset = Vector3.zero;
+    }
+
+    public void Frame(float nextYaw, float nextPitch, float nextDistance, Vector3 worldPoint)
+    {
+        yaw = nextYaw;
+        pitch = Mathf.Clamp(nextPitch, PitchMin, PitchMax);
+        distance = Mathf.Clamp(nextDistance, 1.15f, 18f);
+        var pivotBase = target != null ? target.position + Vector3.up * 0.05f : Vector3.up * 0.05f;
+        lookOffset = worldPoint - pivotBase;
     }
 
     public void Zoom(float scroll)
@@ -48,7 +59,7 @@ public class OrbitCamera : MonoBehaviour
         if (target == null)
             return;
 
-        var pivot = target.position + Vector3.up * 0.05f;
+        var pivot = target.position + Vector3.up * 0.05f + lookOffset;
         var rotation = Quaternion.Euler(pitch, yaw, 0f);
         transform.position = pivot + rotation * new Vector3(0f, 0f, distance);
         transform.LookAt(pivot);
