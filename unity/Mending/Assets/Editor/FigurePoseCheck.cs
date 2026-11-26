@@ -61,6 +61,54 @@ public static class FigurePoseCheck
                 "knob scale " + (knob == null ? "missing" : knob.localScale.x.ToString("0.000")));
             Check(report, ref failed, "limb can be clicked", figure.Part("Forearm.R").GetComponent<BodyPart>() != null,
                 "forearm body part");
+
+            Check(report, ref failed, "upper arm drives the shoulder", Drives(figure, "UpperArm.R", "Shoulder.R", false), "shoulder");
+            Check(report, ref failed, "forearm drives the elbow", Drives(figure, "Forearm.R", "Elbow.R", false), "elbow");
+            Check(report, ref failed, "hand drives the wrist", Drives(figure, "Hand.R", "Wrist.R", false), "wrist");
+            Check(report, ref failed, "head drives the neck",
+                figure.Part("Head").Find("Head.Shape").GetComponent<BodyPart>().joint == figure.Joint("Neck"), "neck");
+            Check(report, ref failed, "thigh drives the hip", Drives(figure, "Thigh.R", "Hip.R", false), "hip");
+            Check(report, ref failed, "calf drives the knee", Drives(figure, "Shin.R", "Knee.R", false), "knee");
+            Check(report, ref failed, "foot drives the ankle", Drives(figure, "Foot.R", "Ankle.R", false), "ankle");
+            Check(report, ref failed, "toes drive the toe joint",
+                figure.Part("Toes.R.Shape").GetComponent<BodyPart>().joint == figure.Joint("Toes.R"), "toes");
+            Check(report, ref failed, "chest drives the waist", Drives(figure, "Torso", "Waist", false), "torso");
+            Check(report, ref failed, "hip drives the waist from below", Drives(figure, "Pelvis", "Waist", true), "pelvis");
+
+            var waist = figure.Joint("Waist");
+            var waistKnob = waist.transform.Find("Waist.Knob");
+            Check(report, ref failed, "waist ball is visible", waistKnob != null && Mathf.Abs(waistKnob.localScale.x - 0.168f) < 0.001f,
+                "knob scale " + (waistKnob == null ? "missing" : waistKnob.localScale.x.ToString("0.000")));
+            Check(report, ref failed, "waist sits between chest and hip",
+                figure.Part("Torso").position.y > waist.transform.position.y && waist.transform.position.y > figure.Part("Pelvis").position.y,
+                "torso " + figure.Part("Torso").position.y.ToString("0.000") + " waist " + waist.transform.position.y.ToString("0.000")
+                + " pelvis " + figure.Part("Pelvis").position.y.ToString("0.000"));
+
+            var torso = figure.Part("Torso").position;
+            var pelvis = figure.Part("Pelvis").position;
+            waist.SetHinge(30f);
+            Check(report, ref failed, "chest bends at the waist", figure.Part("Torso").position.z > torso.z + 0.02f,
+                "torso z " + torso.z.ToString("0.000") + " -> " + figure.Part("Torso").position.z.ToString("0.000"));
+            Check(report, ref failed, "hip stays while the chest bends", Vector3.Distance(figure.Part("Pelvis").position, pelvis) < 0.001f,
+                "pelvis moved");
+            waist.SetHinge(0f);
+
+            torso = figure.Part("Torso").position;
+            pelvis = figure.Part("Pelvis").position;
+            var waistPoint = waist.transform.position;
+            waist.OrbitParent(20f);
+            Check(report, ref failed, "hip swings around the waist", Vector3.Distance(figure.Part("Pelvis").position, pelvis) > 0.02f,
+                "pelvis moved " + Vector3.Distance(figure.Part("Pelvis").position, pelvis).ToString("0.000"));
+            Check(report, ref failed, "chest stays while the hip swings", Vector3.Distance(figure.Part("Torso").position, torso) < 0.01f,
+                "torso moved " + Vector3.Distance(figure.Part("Torso").position, torso).ToString("0.000"));
+            Check(report, ref failed, "waist ball stays put", Vector3.Distance(waist.transform.position, waistPoint) < 0.001f,
+                "waist moved");
+
+            Check(report, ref failed, "joints are numbered",
+                figure.Joint("Neck").number == 1 && figure.Joint("Waist").number == 2
+                && figure.Joint("Shoulder.L").number == 3 && figure.Joint("Toes.R").number == 16,
+                "neck " + figure.Joint("Neck").number + " waist " + figure.Joint("Waist").number
+                + " shoulder " + figure.Joint("Shoulder.L").number + " toes " + figure.Joint("Toes.R").number);
         }
         finally
         {
@@ -72,6 +120,12 @@ public static class FigurePoseCheck
         }
 
         EditorApplication.Exit(failed ? 1 : 0);
+    }
+
+    static bool Drives(CuteFigure figure, string part, string joint, bool movesParent)
+    {
+        var body = figure.Part(part).GetComponent<BodyPart>();
+        return body != null && body.joint == figure.Joint(joint) && body.movesParent == movesParent;
     }
 
     static float Lowest(CuteFigure figure)

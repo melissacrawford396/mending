@@ -20,16 +20,17 @@ One cute, minimal human, modeled in this project. Body parts are separate shapes
 
 **Decided:** Toes are one partial semicircle on the front of each foot. That piece bends back and forth on its hinge. There are no separate toes.
 
-**Decided:** Click a joint to highlight it and outline the beige parts that move with it. Drag one of those parts to bend the joint. While it moves, a partial circle shows that joint's range. Dragging the background turns the view.
+**Decided:** Hover a part and it outlines. Click it and the whole part turns around one joint. The upper arm turns around the shoulder, the forearm around the elbow, the hand around the wrist, the head around the neck, the thigh around the hip, the calf around the knee, the foot around the ankle, and the toes around the toe joint. The chest and the hip both turn around the waist ball between them: the chest leans the upper body, and the hip swings the lower body. While a joint moves, a partial circle shows its range. Dragging the background turns the view, including from above. The ground is a pale see-through green, and the background is a light blue.
 
-**Proposed:** Hands are one shape each. Fingers and a bending spine are the next joints, after this figure poses.
+**Proposed:** Hands are one shape each. Fingers are the next joints, after this figure poses.
 
 ## First figure
 
-The pelvis is the root. The torso is one shape and does not bend yet. Joints are empty pivots parented in a chain. The mesh for a part is a child of its joint, so the knob and the part rotate together.
+The pelvis is the root. A waist joint sits between the pelvis and the torso, with a visible blue ball. The torso, neck, and arms hang from that joint. The legs hang from the pelvis. Joints are empty pivots parented in a chain. The mesh for a part is a child of its joint, so the knob and the part rotate together.
 
 | Joint | What hangs from it |
 | --- | --- |
+| Waist | Torso, neck, head, and both arms |
 | Neck | Head |
 | Shoulder, each side | Upper arm, elbow, forearm, wrist, hand |
 | Elbow, each side | Forearm, wrist, hand |

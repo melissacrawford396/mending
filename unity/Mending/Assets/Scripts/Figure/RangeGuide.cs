@@ -17,18 +17,24 @@ public class RangeGuide : MonoBehaviour
 
     public void Show(JointControl joint)
     {
+        bool showSwing = joint.limit != JointControl.DragLimit.Out && joint.limit != JointControl.DragLimit.Locked;
+        bool showLift = joint.kind == JointControl.Kind.TwoAxis
+            && joint.limit != JointControl.DragLimit.Forward
+            && joint.limit != JointControl.DragLimit.Locked;
+        if (!showSwing && !showLift)
+        {
+            Hide();
+            return;
+        }
+
         gameObject.SetActive(true);
         float radius = Mathf.Max(joint.ballRadius * 2.6f, 0.11f);
-        Fill(swing, joint, radius, true);
-        if (joint.kind == JointControl.Kind.TwoAxis)
-        {
-            lift.gameObject.SetActive(true);
+        swing.gameObject.SetActive(showSwing);
+        if (showSwing)
+            Fill(swing, joint, radius, true);
+        lift.gameObject.SetActive(showLift);
+        if (showLift)
             Fill(lift, joint, radius, false);
-        }
-        else
-        {
-            lift.gameObject.SetActive(false);
-        }
     }
 
     public void Hide()

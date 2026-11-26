@@ -8,10 +8,11 @@ public class FigureStage : MonoBehaviour
     OrbitCamera orbit;
     Camera cam;
     RangeGuide range;
-    JointControl selected;
+    BodyPart hovered;
+    JointControl highlighted;
     JointControl dragging;
+    bool dragLower;
     bool orbiting;
-    GUIStyle hintStyle;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
@@ -30,7 +31,7 @@ public class FigureStage : MonoBehaviour
 
         cam = Camera.main;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.96f, 0.93f, 0.88f);
+        cam.backgroundColor = new Color(0.85f, 0.93f, 0.99f);
         cam.fieldOfView = 32f;
         cam.nearClipPlane = 0.05f;
 
@@ -45,21 +46,47 @@ public class FigureStage : MonoBehaviour
         range.Hide();
 
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.62f, 0.59f, 0.54f);
+        RenderSettings.ambientLight = new Color(0.74f, 0.78f, 0.82f);
 
         var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
         ground.name = "Ground";
         Destroy(ground.GetComponent<Collider>());
-        ground.transform.position = new Vector3(0f, -0.01f, 0.08f);
-        ground.transform.localScale = new Vector3(3.2f, 0.02f, 3.2f);
+        ground.transform.position = new Vector3(0f, -0.02f, 0.08f);
+        ground.transform.localScale = new Vector3(4.4f, 0.012f, 4.4f);
+        ground.GetComponent<Renderer>().sharedMaterial = SeeThroughFloor();
+    }
+
+    static Material SeeThroughFloor()
+    {
         var shader = Shader.Find("Universal Render Pipeline/Lit");
         if (shader == null)
             shader = Shader.Find("Standard");
         var material = new Material(shader);
-        var color = new Color(0.9f, 0.86f, 0.8f);
-        material.SetColor("_BaseColor", color);
-        material.SetFloat("_Smoothness", 0.05f);
-        ground.GetComponent<Renderer>().sharedMaterial = material;
+        var color = new Color(0.68f, 0.9f, 0.66f, 0.24f);
+        if (material.HasProperty("_BaseColor"))
+            material.SetColor("_BaseColor", color);
+        if (material.HasProperty("_Color"))
+            material.SetColor("_Color", color);
+        if (material.HasProperty("_Smoothness"))
+            material.SetFloat("_Smoothness", 0.04f);
+        if (material.HasProperty("_Surface"))
+            material.SetFloat("_Surface", 1f);
+        if (material.HasProperty("_Blend"))
+            material.SetFloat("_Blend", 0f);
+        if (material.HasProperty("_SrcBlend"))
+            material.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+        if (material.HasProperty("_DstBlend"))
+            material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+        if (material.HasProperty("_ZWrite"))
+            material.SetInt("_ZWrite", 0);
+        if (material.HasProperty("_Cull"))
+            material.SetInt("_Cull", (int)CullMode.Off);
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        material.DisableKeyword("_ALPHATEST_ON");
+        material.renderQueue = (int)RenderQueue.Transparent;
+        return material;
     }
 
     void Update()
@@ -68,104 +95,147 @@ public class FigureStage : MonoBehaviour
         if (mouse == null || cam == null)
             return;
 
+        var mousePosition = mouse.position.ReadValue();
+
         if (mouse.leftButton.wasPressedThisFrame)
         {
-            var ray = cam.ScreenPointToRay(mouse.position.ReadValue());
-            var hits = Physics.RaycastAll(ray, 80f);
-            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
-            JointKnob knob = null;
-            BodyPart part = null;
-            float knobDistance = float.PositiveInfinity;
-            float partDistance = float.PositiveInfinity;
-            foreach (var hit in hits)
+            if (Pick(mousePosition, out var part, out var knob, out _))
             {
-                var hitKnob = hit.collider.GetComponent<JointKnob>();
-                if (hitKnob != null && hit.distance < knobDistance)
-                {
-                    knob = hitKnob;
-                    knobDistance = hit.distance;
-                }
-
-                var hitPart = hit.collider.GetComponent<BodyPart>();
-                if (hitPart != null && hit.distance < partDistance)
-                {
-                    part = hitPart;
-                    partDistance = hit.distance;
-                }
-            }
-
-            bool knobFirst = knob != null && knobDistance <= partDistance + 0.012f;
-            if (knobFirst)
-            {
-                Select(knob.Joint);
-                dragging = null;
                 orbiting = false;
-            }
-            else if (part != null && selected != null && part.transform.IsChildOf(selected.transform))
-            {
-                dragging = selected;
-                range.Show(selected);
-                orbiting = false;
-            }
-            else if (hits.Length == 0)
-            {
-                Select(null);
-                dragging = null;
-                orbiting = true;
+                dragging = part != null ? part.joint : knob.Joint;
+                dragLower = part != null && part.movesParent;
+                ShowLimb(part, dragging);
+                if (dragging != null)
+                    range.Show(dragging);
             }
             else
             {
                 dragging = null;
-                orbiting = false;
+                dragLower = false;
+                orbiting = true;
+                range.Hide();
+                ShowLimb(null, null);
             }
         }
 
         if (mouse.leftButton.wasReleasedThisFrame)
         {
             dragging = null;
-            range.Hide();
+            dragLower = false;
             orbiting = false;
+            range.Hide();
         }
 
         var delta = mouse.delta.ReadValue();
-        if (dragging != null)
+        if (dragging != null && mouse.leftButton.isPressed)
         {
-            dragging.Drag(delta, cam);
+            if (dragLower)
+                dragging.DragLower(delta, cam);
+            else
+                dragging.Drag(delta, cam);
             range.Show(dragging);
         }
-        else if (orbiting)
+        else if (orbiting && mouse.leftButton.isPressed)
+        {
             orbit.AddDelta(delta);
+        }
+        else
+        {
+            Hover(mousePosition);
+        }
 
         float scroll = mouse.scroll.ReadValue().y;
         if (Mathf.Abs(scroll) > 0.01f)
             orbit.Zoom(scroll);
     }
 
-    void OnGUI()
+    void Hover(Vector2 screen)
     {
-        if (hintStyle == null)
+        if (!Pick(screen, out var part, out var knob, out _))
         {
-            hintStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 16,
-                alignment = TextAnchor.LowerCenter
-            };
-            hintStyle.normal.textColor = new Color(0.28f, 0.3f, 0.34f);
+            ShowLimb(null, null);
+            return;
         }
 
-        GUI.Label(new Rect(0f, Screen.height - 52f, Screen.width, 36f),
-            "Click a blue joint, then drag an outlined part. Drag the background to turn.", hintStyle);
+        if (part != null)
+            ShowLimb(part, part.joint);
+        else
+            ShowLimb(null, knob.Joint);
     }
 
-    void Select(JointControl joint)
+    bool Pick(Vector2 screen, out BodyPart part, out JointKnob knob, out Vector3 point)
     {
-        selected = joint;
-        foreach (var part in figure.GetComponentsInChildren<BodyPart>(true))
-            part.SetOutlined(joint != null && part.transform.IsChildOf(joint.transform));
-        foreach (var knob in figure.GetComponentsInChildren<JointKnob>(true))
-            knob.SetHighlighted(joint != null && knob.Joint == joint);
-        if (joint == null)
-            range.Hide();
+        part = null;
+        knob = null;
+        point = Vector3.zero;
+        var hits = Physics.RaycastAll(cam.ScreenPointToRay(screen), 80f);
+        if (hits.Length == 0)
+            return false;
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        float partDistance = float.PositiveInfinity;
+        float knobDistance = float.PositiveInfinity;
+        foreach (var hit in hits)
+        {
+            var hitPart = hit.collider.GetComponent<BodyPart>();
+            if (hitPart != null && hit.distance < partDistance)
+            {
+                part = hitPart;
+                point = hit.point;
+                partDistance = hit.distance;
+            }
+
+            var hitKnob = hit.collider.GetComponent<JointKnob>();
+            if (hitKnob != null && hit.distance < knobDistance)
+            {
+                knob = hitKnob;
+                knobDistance = hit.distance;
+            }
+        }
+
+        if (part != null && partDistance <= knobDistance + 0.01f)
+        {
+            knob = null;
+            return true;
+        }
+
+        if (knob != null)
+        {
+            part = null;
+            point = knob.transform.position;
+            return true;
+        }
+
+        return false;
+    }
+
+    void ShowLimb(BodyPart part, JointControl joint)
+    {
+        if (hovered != part)
+        {
+            if (hovered != null)
+                hovered.SetOutlined(false);
+            hovered = part;
+            if (hovered != null)
+                hovered.SetOutlined(true);
+        }
+
+        if (highlighted == joint)
+            return;
+
+        if (highlighted != null)
+        {
+            var previous = highlighted.GetComponentInChildren<JointKnob>();
+            if (previous != null)
+                previous.SetHighlighted(false);
+        }
+
+        highlighted = joint;
+        if (highlighted == null)
+            return;
+
+        var next = highlighted.GetComponentInChildren<JointKnob>();
+        if (next != null)
+            next.SetHighlighted(true);
     }
 }

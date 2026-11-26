@@ -5,12 +5,12 @@ public class OrbitCamera : MonoBehaviour
     public Transform target;
     public float distance = 2.7f;
     public float yaw = 18f;
-    public float pitch = 12f;
+    public float pitch = -18f;
 
     public void AddDelta(Vector2 pixelDelta)
     {
-        yaw += pixelDelta.x * 0.22f;
-        pitch = Mathf.Clamp(pitch - pixelDelta.y * 0.16f, -5f, 55f);
+        yaw += pixelDelta.x * 0.7f;
+        pitch = Mathf.Clamp(pitch - pixelDelta.y * 0.5f, -78f, 32f);
     }
 
     public void Zoom(float scroll)

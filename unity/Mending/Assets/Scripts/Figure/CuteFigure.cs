@@ -41,37 +41,56 @@ public class CuteFigure : MonoBehaviour
         jointMaterial = MakeMaterial(new Color(0.29f, 0.52f, 0.95f));
         eyeMaterial = MakeMaterial(new Color(0.2f, 0.22f, 0.28f));
 
-        AddBody("Pelvis", Vector3.zero, new Vector3(0.32f, 0.15f, 0.2f));
-        AddBody("Torso", new Vector3(0f, 0.2f, 0f), new Vector3(0.36f, 0.28f, 0.2f));
+        const float pelvisHeight = 0.16f;
+        const float torsoHeight = 0.28f;
+        const float waistDiameter = 0.24f;
+        float visualRadius = waistDiameter * JointScale * 0.5f;
+        float bite = waistDiameter * JointScale * Overlap;
+        float waistY = pelvisHeight * 0.5f + visualRadius - bite;
+        float torsoLocalY = visualRadius - bite + torsoHeight * 0.5f;
+
+        var waist = AddJoint("Waist", transform, new Vector3(0f, waistY, 0f), waistDiameter, JointControl.Kind.Hinge,
+            Vector3.right, new Vector2(-30f, 50f), Vector3.forward, Vector2.zero, Vector3.up);
+        Tag(waist, 2, "Waist");
+        var waistJoint = waist.GetComponent<JointControl>();
+
+        AddBody("Pelvis", transform, Vector3.zero, new Vector3(0.32f, pelvisHeight, 0.22f), waistJoint, true);
+        AddBody("Torso", waist, new Vector3(0f, torsoLocalY, 0f), new Vector3(0.36f, torsoHeight, 0.2f), waistJoint, false);
         Focus = parts["Torso"];
 
-        var neck = AddJoint("Neck", transform, new Vector3(0f, 0.32f, 0f), NeckWidth, JointControl.Kind.Hinge,
+        var neck = AddJoint("Neck", waist, new Vector3(0f, torsoLocalY + 0.12f, 0f), NeckWidth, JointControl.Kind.Hinge,
             Vector3.right, new Vector2(-20f, 35f), Vector3.forward, Vector2.zero, Vector3.up);
         AddLimb(neck, "Neck", Vector3.up, 0.06f, NeckWidth, NeckWidth, NeckWidth * 0.75f);
         AddHead(neck);
+        Tag(neck, 1, "Neck");
 
-        BuildArm(false);
-        BuildArm(true);
+        BuildArm(false, waist, torsoLocalY);
+        BuildArm(true, waist, torsoLocalY);
         BuildLeg(false);
         BuildLeg(true);
         PlantFeet();
     }
 
-    void BuildArm(bool left)
+    void BuildArm(bool left, Transform chest, float torsoLocalY)
     {
         float side = left ? -1f : 1f;
         var raiseAxis = left ? Vector3.back : Vector3.forward;
-        var shoulder = AddJoint("Shoulder." + Side(left), transform, new Vector3(0.22f * side, 0.28f, 0f), Arm,
+        var shoulder = AddJoint("Shoulder." + Side(left), chest, new Vector3(0.22f * side, torsoLocalY + 0.08f, 0f), Arm,
             JointControl.Kind.TwoAxis, Vector3.left, new Vector2(-30f, 170f), raiseAxis, new Vector2(0f, 160f), Vector3.down);
         AddLimb(shoulder, "UpperArm." + Side(left), Vector3.down, 0.18f, Arm, Arm, Arm * 0.72f);
-
         var elbow = AddJoint("Elbow." + Side(left), shoulder, Vector3.down * Span(Arm, Arm, 0.18f), Arm,
             JointControl.Kind.Hinge, Vector3.left, new Vector2(0f, 150f), Vector3.forward, Vector2.zero, Vector3.down);
-        AddLimb(elbow, "Forearm." + Side(left), Vector3.down, 0.16f, Arm, Arm, Arm * 0.72f);
 
+        AddLimb(elbow, "Forearm." + Side(left), Vector3.down, 0.16f, Arm, Arm, Arm * 0.72f);
         var wrist = AddJoint("Wrist." + Side(left), elbow, Vector3.down * Span(Arm, Arm, 0.16f), Arm,
             JointControl.Kind.Hinge, Vector3.left, new Vector2(-30f, 50f), Vector3.forward, Vector2.zero, Vector3.down);
         AddLimb(wrist, "Hand." + Side(left), Vector3.down, 0.1f, Arm, Arm, Arm * 0.62f);
+
+        string sideName = left ? "L" : "R";
+        int first = left ? 3 : 6;
+        Tag(shoulder, first, sideName + " Shoulder");
+        Tag(elbow, first + 1, sideName + " Elbow");
+        Tag(wrist, first + 2, sideName + " Wrist");
     }
 
     void BuildLeg(bool left)
@@ -81,23 +100,36 @@ public class CuteFigure : MonoBehaviour
         var hip = AddJoint("Hip." + Side(left), transform, new Vector3(0.11f * side, -0.02f, 0f), Leg,
             JointControl.Kind.TwoAxis, Vector3.left, new Vector2(-20f, 100f), raiseAxis, new Vector2(0f, 60f), Vector3.down);
         AddLimb(hip, "Thigh." + Side(left), Vector3.down, 0.2f, Leg, Leg, Leg * 0.75f);
-
         var knee = AddJoint("Knee." + Side(left), hip, Vector3.down * Span(Leg, Leg, 0.2f), Leg,
             JointControl.Kind.Hinge, Vector3.right, new Vector2(0f, 150f), Vector3.forward, Vector2.zero, Vector3.down);
-        AddLimb(knee, "Shin." + Side(left), Vector3.down, 0.18f, Leg, Leg, Leg * 0.72f);
 
+        AddLimb(knee, "Shin." + Side(left), Vector3.down, 0.18f, Leg, Leg, Leg * 0.72f);
         var ankle = AddJoint("Ankle." + Side(left), knee, Vector3.down * Span(Leg, Leg, 0.18f), Leg,
             JointControl.Kind.Hinge, Vector3.right, new Vector2(-25f, 50f), Vector3.forward, Vector2.zero, Vector3.forward);
-        AddLimb(ankle, "Foot." + Side(left), Vector3.forward, 0.15f, Leg, Leg, Leg * 0.55f);
 
+        AddLimb(ankle, "Foot." + Side(left), Vector3.forward, 0.15f, Leg, Leg, Leg * 0.55f);
         var toes = AddJoint("Toes." + Side(left), ankle, Vector3.forward * Span(Leg, Leg, 0.15f), Leg,
             JointControl.Kind.Hinge, Vector3.right, new Vector2(-35f, 45f), Vector3.forward, Vector2.zero, Vector3.forward);
         AddToes(toes, "Toes." + Side(left), Leg);
+
+        string sideName = left ? "L" : "R";
+        int first = left ? 9 : 13;
+        Tag(hip, first, sideName + " Hip");
+        Tag(knee, first + 1, sideName + " Knee");
+        Tag(ankle, first + 2, sideName + " Ankle");
+        Tag(toes, first + 3, sideName + " Toes");
     }
 
     static string Side(bool left)
     {
         return left ? "L" : "R";
+    }
+
+    static void Tag(Transform joint, int number, string label)
+    {
+        var control = joint.GetComponent<JointControl>();
+        control.number = number;
+        control.label = label;
     }
 
     Transform AddJoint(string name, Transform parent, Vector3 localPosition, float diameter, JointControl.Kind kind,
@@ -124,8 +156,8 @@ public class CuteFigure : MonoBehaviour
     {
         var oval = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         oval.name = name;
-        ReplaceWithMeshCollider(oval);
-        oval.AddComponent<BodyPart>();
+        ReplaceWithBoxCollider(oval);
+        oval.AddComponent<BodyPart>().Bind(joint.GetComponent<JointControl>());
         oval.transform.SetParent(joint, false);
         float inset = TipInset(jointDiameter);
         oval.transform.localPosition = direction.normalized * (inset + length * 0.5f);
@@ -135,12 +167,13 @@ public class CuteFigure : MonoBehaviour
         parts.Add(name, oval.transform);
     }
 
-    void AddBody(string name, Vector3 localPosition, Vector3 scale)
+    void AddBody(string name, Transform parent, Vector3 localPosition, Vector3 scale, JointControl joint, bool movesParent)
     {
         var oval = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         oval.name = name;
-        DestroyNow(oval.GetComponent<Collider>());
-        oval.transform.SetParent(transform, false);
+        ReplaceWithBoxCollider(oval);
+        oval.AddComponent<BodyPart>().Bind(joint, movesParent);
+        oval.transform.SetParent(parent, false);
         oval.transform.localPosition = localPosition;
         oval.transform.localScale = scale;
         Paint(oval, limbMaterial);
@@ -157,8 +190,7 @@ public class CuteFigure : MonoBehaviour
 
         var skull = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         skull.name = "Head.Shape";
-        ReplaceWithMeshCollider(skull);
-        skull.AddComponent<BodyPart>();
+        skull.AddComponent<BodyPart>().Bind(neck.GetComponent<JointControl>());
         skull.transform.SetParent(pivot.transform, false);
         skull.transform.localScale = Vector3.one * HeadRadius * 2f;
         Paint(skull, limbMaterial);
@@ -189,10 +221,11 @@ public class CuteFigure : MonoBehaviour
         filter.sharedMesh = ToeMesh.Create(jointDiameter * 0.7f, jointDiameter * 0.32f, 150f);
         var renderer = go.AddComponent<MeshRenderer>();
         renderer.sharedMaterial = limbMaterial;
-        var collider = go.AddComponent<MeshCollider>();
-        collider.convex = true;
-        collider.sharedMesh = filter.sharedMesh;
-        go.AddComponent<BodyPart>();
+        var collider = go.AddComponent<BoxCollider>();
+        var bounds = filter.sharedMesh.bounds;
+        collider.center = bounds.center;
+        collider.size = new Vector3(bounds.size.x, Mathf.Max(bounds.size.y, 0.05f), bounds.size.z);
+        go.AddComponent<BodyPart>().Bind(joint.GetComponent<JointControl>());
         parts.Add(name + ".Shape", go.transform);
     }
 
@@ -221,14 +254,14 @@ public class CuteFigure : MonoBehaviour
         transform.position = position;
     }
 
-    static void ReplaceWithMeshCollider(GameObject go)
+    static void ReplaceWithBoxCollider(GameObject go)
     {
         var existing = go.GetComponent<Collider>();
         if (existing != null)
             DestroyImmediate(existing);
-        var collider = go.AddComponent<MeshCollider>();
-        collider.convex = true;
-        collider.sharedMesh = go.GetComponent<MeshFilter>().sharedMesh;
+        var collider = go.AddComponent<BoxCollider>();
+        collider.center = Vector3.zero;
+        collider.size = Vector3.one * 1.15f;
     }
 
     static float TipInset(float diameter)

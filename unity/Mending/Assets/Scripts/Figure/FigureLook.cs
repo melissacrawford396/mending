@@ -3,7 +3,16 @@ using UnityEngine.Rendering;
 
 public class BodyPart : MonoBehaviour
 {
+    public JointControl joint;
+    public bool movesParent;
+
     GameObject outline;
+
+    public void Bind(JointControl driven, bool parentMoves = false)
+    {
+        joint = driven;
+        movesParent = parentMoves;
+    }
 
     public void SetOutlined(bool on)
     {
