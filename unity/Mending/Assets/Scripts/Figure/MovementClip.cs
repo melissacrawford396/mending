@@ -114,22 +114,21 @@ public static class MovementLibrary
         const float hingeCenter = 18f;
         var keys = new List<MovementClip.Key>();
         keys.Add(Arms(0f, 0f, 0f));
-        keys.Add(Arms(0.7f, hingeCenter, raiseCenter - raiseAmp));
+        keys.Add(Arms(0.7f, hingeCenter + hingeAmp, raiseCenter));
         Circle(keys, 0.7f, 3.1f, hingeCenter, hingeAmp, raiseCenter, raiseAmp, true);
         Circle(keys, 3.1f, 5.5f, hingeCenter, hingeAmp, raiseCenter, raiseAmp, false);
         keys.Add(Arms(6.2f, 0f, 0f));
-        return Clip(name, keys, 22f, -8f, distance, "Shoulder.L", "Shoulder.R");
+        return Clip(name, keys, 42f, -8f, distance, "Shoulder.L", "Shoulder.R");
     }
 
     static void Circle(List<MovementClip.Key> keys, float start, float end, float hingeCenter, float hingeAmp, float raiseCenter, float raiseAmp, bool forward)
     {
         const int steps = 28;
-        const float bottom = -Mathf.PI * 0.5f;
-        float direction = forward ? 1f : -1f;
+        float direction = forward ? -1f : 1f;
         for (int i = 1; i <= steps; i++)
         {
             float t = i / (float)steps;
-            float angle = bottom + direction * t * Mathf.PI * 2f;
+            float angle = direction * t * Mathf.PI * 2f;
             float time = Mathf.Lerp(start, end, t);
             keys.Add(Arms(time, hingeCenter + Mathf.Cos(angle) * hingeAmp, raiseCenter + Mathf.Sin(angle) * raiseAmp));
         }
@@ -170,9 +169,11 @@ public static class MovementLibrary
         keys.Add(Stance(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, Vector3.zero));
         keys.Add(Stance(1.4f, 30f, 30f, 0f, -20f, 3f, -23f, 0f, down));
         keys.Add(Stance(3.1f, 30f, 30f, 0f, -20f, 3f, -23f, 0f, down));
-        keys.Add(Stance(4.6f, -20f, 3f, -23f, 30f, 30f, 0f, 0f, down));
+        keys.Add(Stance(4.5f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, Vector3.zero));
+        keys.Add(Stance(4.9f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, Vector3.zero));
         keys.Add(Stance(6.3f, -20f, 3f, -23f, 30f, 30f, 0f, 0f, down));
-        keys.Add(Stance(7.8f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, Vector3.zero));
+        keys.Add(Stance(8.0f, -20f, 3f, -23f, 30f, 30f, 0f, 0f, down));
+        keys.Add(Stance(9.4f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, Vector3.zero));
         return Clip("Ankle stretch", keys, 90f, -14f, 5f, "Ankle.L", "Ankle.R");
     }
 

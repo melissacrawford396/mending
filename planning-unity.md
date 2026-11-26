@@ -58,10 +58,10 @@ Hover to find an exercise, and the clips in [movements.md](movements.md), both u
 
 | Order | Movement | What the clip shows | What has to move |
 | --- | --- | --- | --- |
-| 1 | Small shoulder circles | Both arms out. One small oval forward, then backward. Same view as the large circles. | Both shoulders. |
-| 2 | Large arm circles | One bigger oval forward, then backward. | Both shoulders, through a larger range. |
+| 1 | Small shoulder circles | Arms move forward, then one small oval forward, then backward. Same view as the large circles. | Both shoulders. |
+| 2 | Large arm circles | Arms move forward, then one bigger oval forward, then backward. | Both shoulders, through a larger range. |
 | 3 | Toe flex | The foot stays on the ground. The toes curl and open once. The knee stays straight. | That foot's toes. The hand stays down until fingers exist. |
-| 4 | Ankle stretch | Split stance. The body lowers and stays upright so both feet stay on the ground. Front knee bends, back heel stays down, hold. Then the other side. | Both hips, both knees, and the back ankle. Only that ankle is highlighted. |
+| 4 | Ankle stretch | Split stance. The body lowers and stays upright so both feet stay on the ground. Front knee bends, back heel stays down, hold. The body rises, then the other side lowers the same way. | Both hips, both knees, and the back ankle. Only that ankle is highlighted. |
 | 5 | Arch roll | The right foot slides over a red ball that starts at the toe end. The ball rolls forward as the foot passes over it, and stays under the yellow sole. The underside of that foot is yellow. | A ball prop. The right hip and knee slide that foot over the ball. |
 
 **Proposed:** When those five read clearly in Play mode, record each one from a fixed camera. Same figure, same light. One short video per movement name. That file is what the visuals row in [movements.md](movements.md) stores.
