@@ -116,7 +116,7 @@ public class CuteFigure : MonoBehaviour
         var ankle = AddJoint("Ankle." + Side(left), knee, Vector3.down * Span(kneeDiameter, ankleDiameter, 0.18f), ankleDiameter,
             JointControl.Kind.Hinge, Vector3.right, new Vector2(-25f, 50f), Vector3.forward, Vector2.zero, Vector3.forward);
 
-        AddLimb(ankle, "Foot." + Side(left), Vector3.forward, footLength, ankleDiameter, footWidth, 0.048f);
+        AddLimb(ankle, "Foot." + Side(left), Vector3.forward, footLength, ankleDiameter, footWidth, 0.04f, true);
         AddToes(ankle, left, ankleDiameter, footLength);
 
         string sideName = left ? "L" : "R";
@@ -158,9 +158,9 @@ public class CuteFigure : MonoBehaviour
         return go.transform;
     }
 
-    void AddLimb(Transform joint, string name, Vector3 direction, float length, float jointDiameter, float width, float depth)
+    void AddLimb(Transform joint, string name, Vector3 direction, float length, float jointDiameter, float width, float depth, bool box = false)
     {
-        var oval = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        var oval = GameObject.CreatePrimitive(box ? PrimitiveType.Cube : PrimitiveType.Sphere);
         oval.name = name;
         ReplaceWithBoxCollider(oval);
         oval.AddComponent<BodyPart>().Bind(joint.GetComponent<JointControl>());
@@ -288,17 +288,18 @@ public class CuteFigure : MonoBehaviour
     void AddToes(Transform ankle, bool left, float ankleDiameter, float footLength)
     {
         float medial = left ? 1f : -1f;
-        float[] fromMedial = { 0.046f, 0.024f, 0.004f, -0.016f, -0.036f };
-        float[] diameter = { 0.036f, 0.026f, 0.024f, 0.022f, 0.02f };
-        float[] length = { 0.05f, 0.038f, 0.034f, 0.03f, 0.026f };
+        float front = TipInset(ankleDiameter) + footLength;
+        float[] fromMedial = { 0.04f, 0.02f, 0f, -0.02f, -0.04f };
+        float[] width = { 0.024f, 0.018f, 0.016f, 0.015f, 0.014f };
+        const float jointSize = 0.016f;
+        const float toeLength = 0.02f;
         string sideName = left ? "L" : "R";
         int first = left ? 12 : 20;
         for (int i = 0; i < 5; i++)
         {
-            float z = TipInset(ankleDiameter) + footLength - diameter[i] * 0.15f;
-            var toe = AddJoint("Toe." + Side(left) + "." + (i + 1), ankle, new Vector3(medial * fromMedial[i], -0.012f, z), diameter[i],
+            var toe = AddJoint("Toe." + Side(left) + "." + (i + 1), ankle, new Vector3(medial * fromMedial[i], -0.006f, front - 0.004f), jointSize,
                 JointControl.Kind.Hinge, Vector3.right, new Vector2(-20f, 40f), Vector3.forward, Vector2.zero, Vector3.forward);
-            AddLimb(toe, "Toe." + Side(left) + "." + (i + 1), Vector3.forward, length[i], diameter[i], diameter[i] * 0.85f, diameter[i] * 0.5f);
+            AddLimb(toe, "Toe." + Side(left) + "." + (i + 1), Vector3.forward, toeLength, jointSize, width[i], 0.014f, true);
             Tag(toe, first + i, sideName + " Toe " + (i + 1));
         }
     }

@@ -18,7 +18,7 @@ One cute, minimal human, modeled in this project. Body parts are separate shapes
 
 **Decided:** A joint only rotates on its own axes. Neck, wrist, elbow, knee, ankle, and toes are a single hinge. Shoulder and hip raise the limb and swing it forward. A drag in Play mode follows those axes.
 
-**Decided:** Each foot is longer than it is wide. Five small toes sit on the front of it. Each toe has its own small ball and bends on its own hinge.
+**Decided:** Each foot is a flat rectangle, longer than it is wide. Five short toes sit in a row on the front. Each toe has its own small ball and bends on its own hinge.
 
 **Decided:** Hover a part and it outlines. Click it and the whole part turns around one joint. The upper arm turns around the shoulder, the forearm around the elbow, the hand around the wrist, the head around the neck, the thigh around the hip, the calf around the knee, the foot around the ankle, and each toe around its own joint. The head is large, with white eyes, a black pupil, and a small partial-circle smile. It sits on the neck joint. There is no neck limb. The chest and the hip both turn around the waist ball between them: the chest leans the upper body, and the hip swings the lower body. While a joint moves, a partial circle shows its range. Dragging the background turns the view, including from above. A circle in the top-left corner keeps turning the view while the dot is held out from the center, faster toward the ring. Buttons above it jump to the front, left, right, back, and top. The ground is a pale see-through green, and the background is a light blue.
 
