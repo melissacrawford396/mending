@@ -109,6 +109,8 @@ static class FigureButtons
     static Texture2D pointRight;
     static GUIStyle background;
     static GUIStyle ink;
+    static GUIStyle heading;
+    static GUIStyle plain;
 
     public static bool Button(Rect rect, string text)
     {
@@ -125,6 +127,26 @@ static class FigureButtons
         GUI.contentColor = content;
         GUI.backgroundColor = plate;
         return hit;
+    }
+
+    public static void Panel(Rect rect)
+    {
+        Ensure();
+        var tint = GUI.color;
+        GUI.color = Color.white;
+        var shadow = new Rect(rect.x + 1f, rect.y + 3f, rect.width, rect.height);
+        GUI.DrawTexture(shadow, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, new Color(0f, 0f, 0f, 0.15f), 0f, Radius);
+        GUI.Box(rect, GUIContent.none, background);
+        GUI.color = tint;
+    }
+
+    public static void Text(Rect rect, string text, bool bold)
+    {
+        Ensure();
+        var content = GUI.contentColor;
+        GUI.contentColor = Color.black;
+        GUI.Label(rect, text, bold ? heading : plain);
+        GUI.contentColor = content;
     }
 
     public static bool Triangle(Rect rect, bool pointToRight)
@@ -203,6 +225,20 @@ static class FigureButtons
         ink.onHover.textColor = black;
         ink.onActive.textColor = black;
         ink.onFocused.textColor = black;
+
+        heading = new GUIStyle
+        {
+            fontSize = 14,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleLeft
+        };
+        heading.normal.textColor = black;
+        plain = new GUIStyle
+        {
+            fontSize = 12,
+            alignment = TextAnchor.MiddleLeft
+        };
+        plain.normal.textColor = black;
     }
 
     static Texture2D TriangleTexture(bool pointToRight)

@@ -8,6 +8,7 @@ import '../domain/readiness.dart';
 import '../state/app_model.dart';
 import '../state/mending_scope.dart';
 import 'movement_page.dart';
+import 'movement_visual_view.dart';
 import 'theme.dart';
 
 /// Movements for [area], starred first, then catalog order.
@@ -182,6 +183,9 @@ class _MovementTile extends StatelessWidget {
       color: starred ? mendingBlue : mendingInk,
     );
     return ListTile(
+      leading: MovementThumbnail(
+        visual: model.catalog.visualFor(movement.name),
+      ),
       title: Text(
         movement.name,
         style: const TextStyle(color: mendingInk, fontWeight: FontWeight.w700),

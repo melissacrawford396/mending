@@ -2,7 +2,7 @@
 
 Flutter app for the movement list, stars, and cooldowns. Android first, and it also runs in Chrome.
 
-Movement pictures are placeholders.
+Clips and thumbnails come from the repo's `visuals/` folder through the `assets/visuals` link. A new clip also needs a line under `assets:` in `pubspec.yaml`, an entry in `lib/data/catalog.dart`, and a thumbnail from `visuals/make-thumbnails.sh`.
 
 ```
 cd flutter

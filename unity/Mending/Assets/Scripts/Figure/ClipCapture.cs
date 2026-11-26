@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -12,31 +14,22 @@ public class ClipCapture : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
-        if (!Recording())
+        if (!HasFlag("-recordClips"))
             return;
 
         var host = new GameObject("ClipCapture");
         host.AddComponent<ClipCapture>();
     }
 
-    static bool Recording()
-    {
-        var args = Environment.GetCommandLineArgs();
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (args[i] == "-recordClips")
-                return true;
-        }
-
-        return false;
-    }
-
-    System.Collections.IEnumerator Start()
+    IEnumerator Start()
     {
         yield return null;
-        string output = OutputDirectory();
+        string output = Arg("-recordOutput") ?? Path.GetFullPath(Path.Combine(Application.dataPath, "../../../visuals"));
+        string logPath = Arg("-recordLog") ?? Path.GetFullPath(Path.Combine(Application.dataPath, "../Logs/clip-record-result.txt"));
+        string ffmpeg = Arg("-ffmpeg") ?? "/opt/homebrew/bin/ffmpeg";
+        var only = Requested();
         Directory.CreateDirectory(output);
-        string logPath = Path.Combine(output, "record-log.txt");
+        Directory.CreateDirectory(Path.GetDirectoryName(logPath));
         var log = new StringBuilder();
 
         MovementPlayer player = null;
@@ -49,7 +42,7 @@ public class ClipCapture : MonoBehaviour
 
         if (player == null)
         {
-            Fail(logPath, "No movement player.");
+            Finish(logPath, "No movement player.\n", 1);
             yield break;
         }
 
@@ -61,25 +54,36 @@ public class ClipCapture : MonoBehaviour
             views.enabled = false;
         foreach (var pad in FindObjectsByType<OrbitPad>(FindObjectsSortMode.None))
             pad.enabled = false;
+        foreach (var menu in FindObjectsByType<ColorMenu>(FindObjectsSortMode.None))
+            menu.enabled = false;
         var ground = GameObject.Find("Ground");
         if (ground != null)
+        {
+            float grow = 30f / ground.transform.localScale.x;
             ground.transform.localScale = new Vector3(30f, 0.012f, 30f);
+            var floor = ground.GetComponent<Renderer>().sharedMaterial;
+            if (floor.HasProperty("_BaseMap"))
+                floor.SetTextureScale("_BaseMap", floor.GetTextureScale("_BaseMap") * grow);
+        }
 
         var cam = Camera.main;
+        var orbit = cam.GetComponent<OrbitCamera>();
         var buffer = new RenderTexture(Size, Size, 24);
-        buffer.antiAliasing = 1;
         cam.targetTexture = buffer;
         cam.aspect = 1f;
         var shot = new Texture2D(Size, Size, TextureFormat.RGB24, false);
         var flipped = new byte[Size * Size * 3];
+        var recorded = new HashSet<string>();
         int failures = 0;
 
         for (int clip = 0; clip < player.ClipCount; clip++)
         {
             player.Select(clip);
+            if (only != null && !only.Contains(player.ClipName))
+                continue;
+
             string path = Path.Combine(output, FileName(player.ClipName));
-            var encoder = StartEncoder(path);
-            var orbit = cam.GetComponent<OrbitCamera>();
+            var encoder = StartEncoder(ffmpeg, path);
             int frames = 0;
             for (float time = 0f; time <= player.ClipDuration + 0.0001f; time += 1f / FrameRate)
             {
@@ -97,23 +101,33 @@ public class ClipCapture : MonoBehaviour
 
             encoder.StandardInput.Close();
             encoder.WaitForExit();
-            log.AppendLine(player.ClipName + " " + frames + " frames exit " + encoder.ExitCode + " " + path);
-            if (encoder.ExitCode != 0)
+            recorded.Add(player.ClipName);
+            bool ok = encoder.ExitCode == 0;
+            log.AppendLine((ok ? "ok   " : "BAD  ") + player.ClipName + "  " + frames + " frames  " + path);
+            if (!ok)
                 failures++;
+        }
+
+        if (only != null)
+        {
+            foreach (var name in only)
+            {
+                if (recorded.Contains(name))
+                    continue;
+                log.AppendLine("BAD  no clip named \"" + name + "\"");
+                failures++;
+            }
         }
 
         cam.targetTexture = null;
         buffer.Release();
-        File.WriteAllText(logPath, log.ToString());
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.Exit(failures == 0 ? 0 : 1);
-#endif
+        Finish(logPath, log.ToString(), failures == 0 ? 0 : 1);
     }
 
-    static Process StartEncoder(string path)
+    static Process StartEncoder(string ffmpeg, string path)
     {
         var encoder = new Process();
-        encoder.StartInfo.FileName = "/opt/homebrew/bin/ffmpeg";
+        encoder.StartInfo.FileName = ffmpeg;
         encoder.StartInfo.Arguments =
             "-y -loglevel error -f rawvideo -pix_fmt rgb24 -s " + Size + "x" + Size
             + " -r " + FrameRate + " -i pipe:0 -c:v libx264 -pix_fmt yuv420p -crf 18 -movflags +faststart \""
@@ -121,8 +135,8 @@ public class ClipCapture : MonoBehaviour
         encoder.StartInfo.UseShellExecute = false;
         encoder.StartInfo.RedirectStandardInput = true;
         encoder.StartInfo.RedirectStandardError = true;
-        encoder.Start();
         encoder.ErrorDataReceived += delegate { };
+        encoder.Start();
         encoder.BeginErrorReadLine();
         return encoder;
     }
@@ -139,25 +153,36 @@ public class ClipCapture : MonoBehaviour
         return clipName.ToLowerInvariant().Replace(" ", "-") + ".mp4";
     }
 
-    static string OutputDirectory()
+    static HashSet<string> Requested()
+    {
+        var value = Arg("-recordOnly");
+        if (string.IsNullOrEmpty(value))
+            return null;
+        return new HashSet<string>(value.Split('|'));
+    }
+
+    static bool HasFlag(string flag)
+    {
+        return Array.IndexOf(Environment.GetCommandLineArgs(), flag) >= 0;
+    }
+
+    static string Arg(string flag)
     {
         var args = Environment.GetCommandLineArgs();
         for (int i = 0; i < args.Length - 1; i++)
         {
-            if (args[i] == "-recordOutput")
+            if (args[i] == flag)
                 return args[i + 1];
         }
 
-        return Path.GetFullPath(Path.Combine(Application.dataPath, "../../visuals"));
+        return null;
     }
 
-    static void Fail(string logPath, string message)
+    static void Finish(string logPath, string text, int exitCode)
     {
-        File.WriteAllText(logPath, message + "\n");
+        File.WriteAllText(logPath, text);
 #if UNITY_EDITOR
-        UnityEditor.EditorApplication.Exit(1);
+        UnityEditor.EditorApplication.Exit(exitCode);
 #endif
     }
-
 }
-

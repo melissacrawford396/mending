@@ -1,0 +1,43 @@
+---
+description: How to record the movement videos, and that recording only happens when the user explicitly asks. Use when editing Unity movement clips, the figure, or anything in visuals/.
+globs: unity/Mending/Assets/Scripts/Figure/**,visuals/**
+alwaysApply: false
+---
+
+# Movement clip videos
+
+`visuals/<movement-name>.mp4` and `visuals/thumbnails/` are generated from the Unity figure. Do not edit or hand-record them.
+
+## Only record when explicitly asked
+
+Run the recorder only when the user explicitly asks to record or re-record, for example "record the clips" or "re-record Toe flex". Changing a clip, the figure, its colors, or a camera framing is not a request to record. Make the Unity change, tell the user to stop and press Play, and stop there. You may mention that the videos are now out of date.
+
+## Recording
+
+When asked, run from the repo root:
+
+```bash
+scripts/record-clips.sh                         # every movement
+scripts/record-clips.sh "Toe flex" "Arch roll"  # only these
+```
+
+- Run it with `required_permissions: ["all"]`. It launches Unity and writes to `/tmp/mending-figure`.
+- The user's Unity editor can stay open. The script records from a copy of the project.
+- It takes about 20 seconds. The first run on a fresh copy imports the project and can take several minutes.
+- Each line prints `ok` or `BAD`. A non-zero exit means it failed. Compiler errors print below; the full log is `/tmp/mending-figure/Logs/clip-record.log`.
+- It then runs `visuals/make-thumbnails.sh`.
+
+## Adding a movement
+
+1. Add the clip to `MovementLibrary.All()` in `unity/Mending/Assets/Scripts/Figure/MovementClip.cs`. Its name must match the movement name in `movements.md`.
+2. Add a crop for it in `shot_for` in `visuals/make-thumbnails.sh`.
+3. When the user asks to record it, run `scripts/record-clips.sh "<Movement name>"`. The file is the name in lowercase with dashes: `Toe flex` becomes `visuals/toe-flex.mp4`.
+4. After it is recorded, add the path to the Visuals table in `movements.md`.
+
+## Check the result
+
+After a recording, pull a frame and look at it before telling the user it is done:
+
+```bash
+ffmpeg -v error -y -ss 1 -i visuals/toe-flex.mp4 -frames:v 1 /tmp/toe-flex.png
+```

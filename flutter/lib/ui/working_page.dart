@@ -8,6 +8,7 @@ import '../domain/my_exercise.dart';
 import '../domain/readiness.dart';
 import '../state/mending_scope.dart';
 import 'movement_page.dart';
+import 'movement_visual_view.dart';
 import 'theme.dart';
 
 class WorkingPage extends StatefulWidget {
@@ -174,31 +175,44 @@ class _WorkTile extends StatelessWidget {
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  row.movement.name,
-                  style: const TextStyle(
-                    color: mendingInk,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
+                MovementThumbnail(
+                  visual: MendingScope.of(
+                    context,
+                  ).catalog.visualFor(row.movement.name),
+                  size: 64,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${row.movement.area.label} · ${prescription(sets, reps, cooldown)}',
-                  style: TextStyle(
-                    color: mendingInk.withValues(alpha: 0.72),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  row.status.label,
-                  style: TextStyle(
-                    color: row.status.ready ? mendingBlue : mendingInk,
-                    fontWeight: FontWeight.w800,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        row.movement.name,
+                        style: const TextStyle(
+                          color: mendingInk,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${row.movement.area.label} · ${prescription(sets, reps, cooldown)}',
+                        style: TextStyle(
+                          color: mendingInk.withValues(alpha: 0.72),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        row.status.label,
+                        style: TextStyle(
+                          color: row.status.ready ? mendingBlue : mendingInk,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

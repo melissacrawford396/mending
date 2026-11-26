@@ -105,11 +105,31 @@ const movementCatalog = MovementCatalog(
     ),
   ],
   visuals: [
-    MovementVisual(movementName: 'Arch roll'),
-    MovementVisual(movementName: 'Toe flex'),
-    MovementVisual(movementName: 'Small shoulder circles'),
-    MovementVisual(movementName: 'Large arm circles'),
-    MovementVisual(movementName: 'Ankle stretch'),
+    MovementVisual(
+      movementName: 'Arch roll',
+      representation: 'visuals/arch-roll.mp4',
+      thumbnail: 'visuals/thumbnails/arch-roll.jpg',
+    ),
+    MovementVisual(
+      movementName: 'Toe flex',
+      representation: 'visuals/toe-flex.mp4',
+      thumbnail: 'visuals/thumbnails/toe-flex.jpg',
+    ),
+    MovementVisual(
+      movementName: 'Small shoulder circles',
+      representation: 'visuals/small-shoulder-circles.mp4',
+      thumbnail: 'visuals/thumbnails/small-shoulder-circles.jpg',
+    ),
+    MovementVisual(
+      movementName: 'Large arm circles',
+      representation: 'visuals/large-arm-circles.mp4',
+      thumbnail: 'visuals/thumbnails/large-arm-circles.jpg',
+    ),
+    MovementVisual(
+      movementName: 'Ankle stretch',
+      representation: 'visuals/ankle-stretch.mp4',
+      thumbnail: 'visuals/thumbnails/ankle-stretch.jpg',
+    ),
   ],
 );
 

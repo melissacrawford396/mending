@@ -71,12 +71,15 @@ Changing a default does not rewrite your overrides or past log rows.
 
 ### Visuals
 
-Keyed by the movement type name. Holds how that movement is drawn. Empty until frames exist. Swapping the picture replaces this object only.
+Keyed by the movement type name. Holds how that movement is drawn. Swapping the picture replaces this object only.
 
 | Field | Meaning |
 | --- | --- |
 | Movement name | Key. The movement type name |
-| Representation | Later: the frames or GIF. The app shows a placeholder until this exists |
+| Representation | The clip. The movement page has a player: play, pause, and a seek bar. It loops and has no sound |
+| Thumbnail | A still from the clip. Shown in lists so you can see what you are picking |
+
+A movement with no clip shows a placeholder.
 
 ### My exercises
 

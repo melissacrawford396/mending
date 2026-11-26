@@ -10,6 +10,7 @@ import 'package:mending/domain/sensation.dart';
 import 'package:mending/main.dart';
 import 'package:mending/state/app_model.dart';
 import 'package:mending/ui/body_figure.dart';
+import 'package:mending/ui/movement_visual_view.dart';
 
 void main() {
   Future<AppModel> start(
@@ -47,10 +48,22 @@ void main() {
     await tester.tap(find.text('Arch roll'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Visual later'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(MovementVisualView),
+        matching: find.image(
+          const AssetImage('assets/visuals/thumbnails/arch-roll.jpg'),
+        ),
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('lacrosse ball'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Mark done'));
+    await tester.scrollUntilVisible(
+      find.text('Mark done'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Mark done'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -69,7 +82,11 @@ void main() {
     await tester.tap(find.text('Arch roll'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    await tester.ensureVisible(find.byKey(const Key('sets-add')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('sets-add')),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.byKey(const Key('sets-add')));
     await tester.pump();
     expect(model.findExercise('Arch roll')!.setsOverride, 2);

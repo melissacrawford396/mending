@@ -6,7 +6,7 @@ import '../domain/my_exercise.dart';
 import '../domain/readiness.dart';
 import '../state/mending_scope.dart';
 import 'theme.dart';
-import 'visual_placeholder.dart';
+import 'movement_visual_view.dart';
 
 class MovementPage extends StatelessWidget {
   const MovementPage({super.key, required this.movement});

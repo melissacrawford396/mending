@@ -20,6 +20,16 @@ public class CuteFigure : MonoBehaviour
 
     public Transform Focus { get; private set; }
 
+    public Material SkinMaterial
+    {
+        get { return limbMaterial; }
+    }
+
+    public Material JointMaterial
+    {
+        get { return jointMaterial; }
+    }
+
     public JointControl Joint(string name)
     {
         return joints[name];
@@ -38,8 +48,8 @@ public class CuteFigure : MonoBehaviour
         joints.Clear();
         parts.Clear();
 
-        limbMaterial = MakeMaterial(new Color(0.80f, 0.90f, 0.97f));
-        jointMaterial = MakeMaterial(new Color(0.29f, 0.52f, 0.95f));
+        limbMaterial = MakeMaterial(new Color(0.66f, 1f, 0.65f));
+        jointMaterial = MakeMaterial(new Color(0.2f, 0.35f, 0.2f));
         eyeMaterial = MakeFlat(new Color(0.08f, 0.08f, 0.09f));
         sparkleMaterial = MakeFlat(new Color(0.96f, 0.97f, 0.98f));
 

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mending/data/catalog.dart';
 import 'package:mending/domain/completion.dart';
@@ -5,6 +6,7 @@ import 'package:mending/domain/effective.dart';
 import 'package:mending/domain/movement_type.dart';
 import 'package:mending/domain/my_exercise.dart';
 import 'package:mending/domain/readiness.dart';
+import 'package:mending/ui/movement_visual_view.dart';
 
 void main() {
   final arch = movementCatalog.byName('Arch roll');
@@ -113,14 +115,18 @@ void main() {
     );
   });
 
-  test('visuals are keyed by name and empty', () {
+  test('every movement has a bundled clip and thumbnail', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
     expect(
       movementCatalog.visuals.map((visual) => visual.movementName),
       movementCatalog.movements.map((movement) => movement.name),
     );
-    expect(
-      movementCatalog.visuals.map((visual) => visual.representation),
-      everyElement(isNull),
-    );
+    for (final visual in movementCatalog.visuals) {
+      for (final path in [visual.representation, visual.thumbnail]) {
+        expect(path, isNotNull, reason: visual.movementName);
+        final bytes = await rootBundle.load(assetFor(path!));
+        expect(bytes.lengthInBytes, greaterThan(0), reason: path);
+      }
+    }
   });
 }
