@@ -72,9 +72,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MovementVisualView(
-            visual: testCatalog.visualFor('arch-roll'),
-          ),
+          body: MovementVisualView(visual: testCatalog.visualFor('arch-roll')),
         ),
       ),
     );

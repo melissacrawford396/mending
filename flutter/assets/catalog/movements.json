@@ -8,6 +8,8 @@
       "defaultSets": 1,
       "defaultReps": 10,
       "defaultCooldown": 2,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
       "description": "Roll out the arch of your foot with a lacrosse ball. Use only the pressure of your foot. Do not stomp. Overdoing this will aggravate your foot. Reps mean slow passes along the arch."
     },
     {
@@ -17,6 +19,8 @@
       "defaultSets": 1,
       "defaultReps": 10,
       "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
       "description": "Cross one leg over the other knee, then flex your toes back and forth. Be gentle. You can use your hand to assist the movement."
     },
     {
@@ -26,6 +30,8 @@
       "defaultSets": 1,
       "defaultReps": 10,
       "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
       "description": "Put your arms out and make small circles. Do it both directions. Reps mean circles in one direction. Then do the same number the other way."
     },
     {
@@ -35,6 +41,8 @@
       "defaultSets": 1,
       "defaultReps": 10,
       "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
       "description": "Make large arm circles. Do both directions. Reps mean circles in one direction. Then do the same number the other way."
     },
     {
@@ -44,6 +52,8 @@
       "defaultSets": 2,
       "defaultReps": 1,
       "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
       "description": "Step one foot in front of the other. Bend the front knee and keep the back foot flat on the ground. You should feel the stretch in the back foot's ankle, in the Achilles tendon. Switch which foot is back. Sets mean one held stretch per side."
     }
   ]

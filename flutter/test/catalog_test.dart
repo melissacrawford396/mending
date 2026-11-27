@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mending/data/catalog.dart';
 import 'package:mending/data/catalog_source.dart';
 import 'package:mending/domain/body_area.dart';
+import 'package:mending/domain/effective.dart';
 
 import 'test_catalog.dart';
 
@@ -33,6 +37,52 @@ void main() {
     }
   });
 
+  test('every movement sets the schedule fields within the caps', () {
+    final raw =
+        jsonDecode(File(movementsAsset).readAsStringSync())
+            as Map<String, dynamic>;
+    for (final row in raw['movements'] as List) {
+      final json = row as Map<String, dynamic>;
+      for (final key in const [
+        'defaultSets',
+        'defaultReps',
+        'defaultCooldown',
+        'defaultPerDay',
+        'defaultRestSeconds',
+      ]) {
+        expect(json[key], isA<int>(), reason: '${json['id']} $key');
+      }
+    }
+    for (final movement in testCatalog.movements) {
+      final reason = movement.id;
+      expect(
+        movement.defaultSets,
+        inInclusiveRange(1, maxSets),
+        reason: reason,
+      );
+      expect(
+        movement.defaultReps,
+        inInclusiveRange(1, maxReps),
+        reason: reason,
+      );
+      expect(
+        movement.defaultCooldown,
+        inInclusiveRange(1, maxCooldownDays),
+        reason: reason,
+      );
+      expect(
+        movement.defaultPerDay,
+        inInclusiveRange(1, maxPerDay),
+        reason: reason,
+      );
+      expect(
+        movement.defaultRestSeconds,
+        inInclusiveRange(0, maxRestSeconds),
+        reason: reason,
+      );
+    }
+  });
+
   test('missing optional fields use defaults and unknown ones are ignored', () {
     final catalog = MovementCatalog.fromJson(
       movements: {
@@ -47,6 +97,8 @@ void main() {
     expect(movement.name, 'neck-roll');
     expect(movement.area, BodyArea.neck);
     expect(movement.defaultSets, 1);
+    expect(movement.defaultPerDay, 1);
+    expect(movement.defaultRestSeconds, 30);
     expect(movement.description, isEmpty);
     expect(catalog.visualFor('neck-roll').representation, isNull);
   });

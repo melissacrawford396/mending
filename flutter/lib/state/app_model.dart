@@ -24,6 +24,11 @@ class AppModel extends ChangeNotifier {
   List<ReviewRow> reviews = [];
   String? skippedReviewSession;
 
+  /// Set after a guided session, once its celebration closes, so the Working
+  /// list can show the movement moving to Waiting. Cleared by
+  /// [clearJustCompleted].
+  String? justCompletedId;
+
   Future<void> load() async {
     final data = await store.load();
     if (!data.initialized) {
@@ -58,27 +63,15 @@ class AppModel extends ChangeNotifier {
   }
 
   Future<void> setStarred(MovementType movement, bool starred) async {
-    final current = findExercise(movement.id) ?? MyExercise.from(movement);
-    await _saveExercise(current.copyWith(starred: starred));
+    await updateExercise(movement, (row) => row.copyWith(starred: starred));
   }
 
-  Future<void> setOverrides(
-    MovementType movement, {
-    required int? sets,
-    required int? reps,
-    required int? cooldown,
-  }) async {
+  Future<void> updateExercise(
+    MovementType movement,
+    MyExercise Function(MyExercise current) change,
+  ) async {
     final current = findExercise(movement.id) ?? MyExercise.from(movement);
-    await _saveExercise(
-      MyExercise(
-        user: current.user,
-        movementId: current.movementId,
-        setsOverride: sets,
-        repsOverride: reps,
-        cooldownOverride: cooldown,
-        starred: current.starred,
-      ),
-    );
+    await _saveExercise(change(current));
   }
 
   Future<void> complete({
@@ -95,6 +88,17 @@ class AppModel extends ChangeNotifier {
     );
     await store.appendCompletion(row);
     completions = [...completions, row];
+    notifyListeners();
+  }
+
+  void showArrival(String movementId) {
+    justCompletedId = movementId;
+    notifyListeners();
+  }
+
+  void clearJustCompleted() {
+    if (justCompletedId == null) return;
+    justCompletedId = null;
     notifyListeners();
   }
 

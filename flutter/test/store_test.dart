@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mending/data/store.dart';
+import 'package:mending/domain/effective.dart';
 import 'package:mending/domain/my_exercise.dart';
 import 'package:mending/domain/readiness.dart';
 import 'package:mending/state/app_model.dart';
@@ -54,12 +55,12 @@ void main() {
     expect(
       exerciseStatus(
         now: DateTime(2026, 11, 22, 8),
-        completedAt: latestCompletionAt(
+        completedTimes: completionTimes(
           again.completions,
           currentUser,
           'arch-roll',
         ),
-        cooldownDays: 2,
+        cooldown: const Cooldown(days: 2),
       ).ready,
       isFalse,
     );
@@ -119,6 +120,7 @@ void main() {
     });
     final model = await load(store: PrefsMendingStore());
     expect(model.findExercise('toe-flex')!.setsOverride, 3);
+    expect(model.findExercise('toe-flex')!.restOverride, isNull);
     expect(model.completions.single.movementId, 'toe-flex');
     expect(model.reviews.single.movementId, 'toe-flex');
 
@@ -150,6 +152,9 @@ void main() {
     expect(exercise.user, currentUser);
     expect(exercise.starred, isFalse);
     expect(exercise.setsOverride, isNull);
+    expect(exercise.perDayOverride, isNull);
+    expect(exercise.gapHoursOverride, isNull);
+    expect(exercise.restOverride, isNull);
     expect(data.completions.single.movementId, 'arch-roll');
     expect(data.reviews, isEmpty);
   });

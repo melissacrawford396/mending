@@ -38,8 +38,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       final small = tester.getRect(find.byType(BodyFigure));
       // ignore: avoid_print
-      print('$size header ${header.height.toStringAsFixed(1)} '
-          'row top ${row.top.toStringAsFixed(0)} small $small');
+      print(
+        '$size header ${header.height.toStringAsFixed(1)} '
+        'row top ${row.top.toStringAsFixed(0)} small $small',
+      );
     });
   }
 }

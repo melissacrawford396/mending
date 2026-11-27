@@ -367,12 +367,12 @@ class _MovementTile extends StatelessWidget {
     final status = starred
         ? exerciseStatus(
             now: model.now(),
-            completedAt: latestCompletionAt(
+            completedTimes: completionTimes(
               model.completions,
               currentUser,
               movement.id,
             ),
-            cooldownDays: cooldown,
+            cooldown: cooldown,
           ).label
         : null;
     final starIcon = Icon(
@@ -380,9 +380,7 @@ class _MovementTile extends StatelessWidget {
       color: starred ? mendingBlue : mendingInk,
     );
     return ListTile(
-      leading: MovementThumbnail(
-        visual: model.catalog.visualFor(movement.id),
-      ),
+      leading: MovementThumbnail(visual: model.catalog.visualFor(movement.id)),
       title: Text(
         movement.name,
         style: const TextStyle(color: mendingInk, fontWeight: FontWeight.w700),

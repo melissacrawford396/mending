@@ -9,6 +9,8 @@ class MovementType {
     required this.defaultSets,
     required this.defaultReps,
     required this.defaultCooldown,
+    this.defaultPerDay = 1,
+    this.defaultRestSeconds = 30,
     required this.description,
   });
 
@@ -21,6 +23,8 @@ class MovementType {
       defaultSets: json['defaultSets'] as int? ?? 1,
       defaultReps: json['defaultReps'] as int? ?? 1,
       defaultCooldown: json['defaultCooldown'] as int? ?? 1,
+      defaultPerDay: json['defaultPerDay'] as int? ?? 1,
+      defaultRestSeconds: json['defaultRestSeconds'] as int? ?? 30,
       description: json['description'] as String? ?? '',
     );
   }
@@ -32,7 +36,13 @@ class MovementType {
   final int defaultSets;
   final int defaultReps;
 
-  /// Days between repeats. 1 means every day.
+  /// Days until the 4 AM reset. 1 means every day.
   final int defaultCooldown;
+
+  /// Times allowed within one day. Above 1, [defaultCooldown] is treated as 1.
+  final int defaultPerDay;
+
+  /// Rest between sets.
+  final int defaultRestSeconds;
   final String description;
 }

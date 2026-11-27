@@ -66,6 +66,8 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).last,
     );
+    await tester.ensureVisible(find.text('Mark done'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Mark done'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -76,7 +78,211 @@ void main() {
     expect(model.completions.single.movementId, 'arch-roll');
     expect(model.completions.single.sets, 1);
     expect(model.completions.single.reps, 10);
-    expect(find.text('Ready in 2 days'), findsWidgets);
+    expect(find.text('Ready in 1d 20h'), findsWidgets);
+  });
+
+  Future<void> openMovement(WidgetTester tester, String name) async {
+    await tester.tap(find.text(name));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+
+  Future<void> scrollTo(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pump();
+  }
+
+  testWidgets('Start sits under the clip and the description above Mark done', (
+    tester,
+  ) async {
+    await start(tester, size: const Size(390, 2000));
+    await openMovement(tester, 'Arch roll');
+    final startButton = tester.getTopLeft(
+      find.byKey(const Key('start-exercise')),
+    );
+    final description = tester.getTopLeft(find.textContaining('lacrosse ball'));
+    expect(
+      tester.getBottomLeft(find.byType(MovementVisualView)).dy,
+      lessThanOrEqualTo(startButton.dy),
+    );
+    expect(
+      startButton.dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('sets-add'))).dy),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('cooldown-add'))).dy,
+      lessThan(description.dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Mark done')).dy,
+      greaterThan(description.dy),
+    );
+  });
+
+  testWidgets('pulling past the end slides the page instead of stretching', (
+    tester,
+  ) async {
+    await start(tester);
+    await openMovement(tester, 'Arch roll');
+    expect(find.byType(StretchingOverscrollIndicator), findsNothing);
+    expect(find.byType(GlowingOverscrollIndicator), findsNothing);
+    final list = find.byType(Scrollable).last;
+    final position = tester.state<ScrollableState>(list).position;
+    var physics = position.physics as ScrollPhysics?;
+    while (physics != null && physics is! BouncingScrollPhysics) {
+      physics = physics.parent;
+    }
+    expect(physics, isA<BouncingScrollPhysics>());
+  });
+
+  testWidgets('cooldown steps from every 7 days down to 3x a day', (
+    tester,
+  ) async {
+    final model = await start(tester, size: const Size(390, 2000));
+    await openMovement(tester, 'Toe flex');
+    final add = find.byKey(const Key('cooldown-add'));
+    final remove = find.byKey(const Key('cooldown-remove'));
+    IconButton button(Finder finder) => tester.widget<IconButton>(finder);
+
+    expect(find.text('every day'), findsOneWidget);
+    expect(find.text('Gap'), findsNothing);
+
+    await tester.tap(remove);
+    await tester.pump();
+    expect(find.text('2x a day'), findsOneWidget);
+    expect(find.text('Gap'), findsOneWidget);
+    expect(find.text('8 h apart'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('gap-add')));
+    await tester.pump();
+    expect(find.text('9 h apart'), findsOneWidget);
+    expect(model.findExercise('toe-flex')!.gapHoursOverride, 9);
+
+    await tester.tap(remove);
+    await tester.pump();
+    expect(find.text('3x a day'), findsOneWidget);
+    expect(find.text('4 h apart'), findsOneWidget);
+    expect(button(remove).onPressed, isNull);
+    final exercise = model.findExercise('toe-flex')!;
+    expect(exercise.perDayOverride, 3);
+    expect(exercise.gapHoursOverride, isNull);
+    expect(exercise.cooldownOverride, 1);
+
+    for (var i = 0; i < 8; i++) {
+      await tester.tap(add);
+      await tester.pump();
+    }
+    expect(find.text('every 7 days'), findsOneWidget);
+    expect(button(add).onPressed, isNull);
+    expect(find.text('Gap'), findsNothing);
+
+    await tester.tap(find.text('Use default'));
+    await tester.pump();
+    expect(find.text('every day'), findsOneWidget);
+    expect(model.findExercise('toe-flex')!.cooldownOverride, isNull);
+    expect(model.findExercise('toe-flex')!.perDayOverride, isNull);
+  });
+
+  testWidgets('a guided session logs once and moves the row to the bottom', (
+    tester,
+  ) async {
+    final now = DateTime(2026, 11, 25, 8);
+    final model = await start(
+      tester,
+      now: () => now,
+      initial: StoreData(
+        initialized: true,
+        exercises: seedExercises(testCatalog),
+        completions: [
+          Completion(
+            user: currentUser,
+            movementId: 'toe-flex',
+            completedAt: DateTime(2026, 11, 25, 7),
+            sets: 1,
+            reps: 10,
+          ),
+        ],
+        reviews: const [],
+        skippedReviewSession: null,
+      ),
+    );
+    await openMovement(tester, 'Ankle stretch');
+    await scrollTo(tester, find.text('Start exercise'));
+    await tester.tap(find.text('Start exercise'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Set 1 of 2'), findsOneWidget);
+    expect(find.text('Do 1 rep'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    expect(find.text('Rest'), findsOneWidget);
+    expect(find.text('0:30'), findsOneWidget);
+    expect(find.text('Next: set 2 of 2'), findsOneWidget);
+
+    await tester.tap(find.text('Skip rest'));
+    await tester.pump();
+    expect(find.text('Set 2 of 2'), findsOneWidget);
+    expect(model.completions, hasLength(1));
+
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Ankle stretch done'), findsOneWidget);
+    expect(model.completions, hasLength(2));
+    expect(model.completions.last.movementId, 'ankle-stretch');
+    expect(model.completions.last.sets, 2);
+
+    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Ankle stretch done'), findsNothing);
+    expect(find.text('Done'), findsOneWidget);
+
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    expect(model.justCompletedId, isNull);
+    final waiting = tester.getTopLeft(find.text('Waiting')).dy;
+    final toe = tester.getTopLeft(find.text('Toe flex')).dy;
+    final ankle = tester.getTopLeft(find.text('Ankle stretch')).dy;
+    expect(toe, greaterThan(waiting));
+    expect(ankle, greaterThan(toe));
+  });
+
+  testWidgets('rest moves on by itself and leaving early logs nothing', (
+    tester,
+  ) async {
+    var clock = DateTime(2026, 11, 25, 8);
+    final model = await start(
+      tester,
+      now: () => clock,
+      size: const Size(390, 1400),
+    );
+    await openMovement(tester, 'Ankle stretch');
+    await scrollTo(tester, find.text('Start exercise'));
+    await tester.tap(find.text('Start exercise'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    expect(find.text('Rest'), findsOneWidget);
+    clock = clock.add(const Duration(seconds: 31));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Set 2 of 2'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pump();
+    expect(find.text('End exercise?'), findsOneWidget);
+    await tester.tap(find.text('End'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Set 2 of 2'), findsNothing);
+    expect(find.text('Start exercise'), findsOneWidget);
+    expect(model.completions, isEmpty);
   });
 
   testWidgets('a sets override can return to the default', (tester) async {

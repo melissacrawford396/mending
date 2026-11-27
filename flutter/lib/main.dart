@@ -28,8 +28,25 @@ class MendingApp extends StatelessWidget {
         title: 'Mending',
         debugShowCheckedModeBanner: false,
         theme: mendingTheme(),
+        scrollBehavior: const BouncingScrollBehavior(),
         home: const HomePage(),
       ),
     );
   }
+}
+
+/// Pulling past the end slides the content instead of stretching it.
+class BouncingScrollBehavior extends MaterialScrollBehavior {
+  const BouncingScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
 }
