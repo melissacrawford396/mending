@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'data/catalog.dart';
+import 'data/catalog_source.dart';
 import 'data/store.dart';
 import 'state/app_model.dart';
 import 'state/mending_scope.dart';
@@ -9,7 +9,8 @@ import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final model = AppModel(store: PrefsMendingStore(), catalog: movementCatalog);
+  final catalog = await AssetCatalogSource().load();
+  final model = AppModel(store: PrefsMendingStore(), catalog: catalog);
   await model.load();
   runApp(MendingApp(model: model));
 }

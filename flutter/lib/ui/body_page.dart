@@ -9,17 +9,25 @@ import 'figure_layout.dart';
 
 const _wideBreakpoint = 720.0;
 const _shrink = Duration(milliseconds: 260);
-const _pad = 16.0;
-const _topPad = 8.0;
-const _gap = 12.0;
 
-/// Room for Front/Back above the figure on a phone.
-const _sidesHeight = 48.0;
+// Layout as fractions of the page so it scales with the screen. Heights are
+// of the page height, and margins are of the page width.
+const _wideMargin = 0.0125;
+const _wideTop = 0.01;
+const _wideGap = 0.015;
 
-/// How much of the first movement row shows under the sheet's header in peek.
-const _peekRow = 0.7;
+const _phoneMargin = 0.04;
+const _phoneTop = 0.01;
+const _phoneGap = 0.017;
 
-/// The figure's size, and Front/Back's, once the phone sheet is full.
+/// Room for Front/Back above the figure.
+const _sidesFraction = 0.068;
+
+/// The peek: the sheet's header plus the top of the first movement row.
+const _peekFraction = 0.13;
+const _headerFraction = 0.06;
+
+/// The figure's size, and Front/Back's, once the sheet is full.
 const _smallFigure = 0.4;
 const _smallSides = 0.8;
 
@@ -116,14 +124,20 @@ class _BodyPageState extends State<BodyPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= _wideBreakpoint;
-        return wide ? _wide() : _narrow(constraints.biggest);
+        return wide ? _wide(constraints.biggest) : _narrow(constraints.biggest);
       },
     );
   }
 
-  Widget _wide() {
+  Widget _wide(Size page) {
+    final margin = page.width * _wideMargin;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_pad, _topPad, _pad, _pad),
+      padding: EdgeInsets.fromLTRB(
+        margin,
+        page.height * _wideTop,
+        margin,
+        margin,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -132,7 +146,7 @@ class _BodyPageState extends State<BodyPage> {
             child: Column(
               children: [
                 _sides(),
-                const SizedBox(height: _gap),
+                SizedBox(height: page.height * _wideGap),
                 Expanded(
                   child: AnimatedFractionallySizedBox(
                     duration: _shrink,
@@ -146,7 +160,7 @@ class _BodyPageState extends State<BodyPage> {
               ],
             ),
           ),
-          const SizedBox(width: _pad),
+          SizedBox(width: margin),
           Expanded(
             flex: 4,
             child: AreaMovementsPanel(
@@ -163,17 +177,25 @@ class _BodyPageState extends State<BodyPage> {
   /// Closed, peek, and full. The bottom strip stays empty when closed, so the
   /// figure does not move when the peek opens.
   Widget _narrow(Size page) {
-    final strip = sheetHeaderHeight + _peekRow * movementRowHeight;
+    final margin = page.width * _phoneMargin;
+    final gap = page.height * _phoneGap;
+    final header = page.height * _headerFraction;
+    final strip = page.height * _peekFraction;
     final area = Rect.fromLTRB(
-      _pad,
-      _topPad,
-      page.width - _pad,
-      page.height - strip - _gap,
+      margin,
+      page.height * _phoneTop,
+      page.width - margin,
+      page.height - strip - gap,
     );
-    final sides = Rect.fromLTWH(area.left, area.top, area.width, _sidesHeight);
+    final sides = Rect.fromLTWH(
+      area.left,
+      area.top,
+      area.width,
+      page.height * _sidesFraction,
+    );
     final big = Rect.fromLTRB(
       area.left,
-      sides.bottom + _gap,
+      sides.bottom + gap,
       area.right,
       area.bottom,
     );
@@ -183,8 +205,8 @@ class _BodyPageState extends State<BodyPage> {
       big.width * _smallFigure,
       big.height * _smallFigure,
     );
-    _peekSize = (strip / page.height).clamp(0.0, 1.0);
-    _fullSize = ((page.height - small.bottom - _gap) / page.height).clamp(
+    _peekSize = _peekFraction;
+    _fullSize = ((page.height - small.bottom - gap) / page.height).clamp(
       _peekSize,
       1.0,
     );
@@ -216,7 +238,7 @@ class _BodyPageState extends State<BodyPage> {
                 child: Transform.scale(
                   scale: lerpDouble(1, _smallSides, open)!,
                   alignment: sidesAlign,
-                  child: _sides(),
+                  child: FittedBox(fit: BoxFit.scaleDown, child: _sides()),
                 ),
               ),
             ),
@@ -245,6 +267,7 @@ class _BodyPageState extends State<BodyPage> {
                   active: true,
                   onClose: _close,
                   scrollController: scrollController,
+                  headerHeight: header,
                   peeking: !full,
                   onExpand: () => _moveSheet(_fullSize),
                 ),

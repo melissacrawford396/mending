@@ -6,7 +6,7 @@ const currentUser = 'me';
 class MyExercise {
   const MyExercise({
     required this.user,
-    required this.movementName,
+    required this.movementId,
     this.setsOverride,
     this.repsOverride,
     this.cooldownOverride,
@@ -20,13 +20,13 @@ class MyExercise {
   }) {
     return MyExercise(
       user: user,
-      movementName: movement.name,
+      movementId: movement.id,
       starred: starred,
     );
   }
 
   final String user;
-  final String movementName;
+  final String movementId;
   final int? setsOverride;
   final int? repsOverride;
   final int? cooldownOverride;
@@ -35,7 +35,7 @@ class MyExercise {
   MyExercise copyWith({bool? starred}) {
     return MyExercise(
       user: user,
-      movementName: movementName,
+      movementId: movementId,
       setsOverride: setsOverride,
       repsOverride: repsOverride,
       cooldownOverride: cooldownOverride,
@@ -45,7 +45,7 @@ class MyExercise {
 
   Map<String, dynamic> toJson() => {
     'user': user,
-    'movementName': movementName,
+    'movementId': movementId,
     'setsOverride': setsOverride,
     'repsOverride': repsOverride,
     'cooldownOverride': cooldownOverride,
@@ -54,12 +54,12 @@ class MyExercise {
 
   factory MyExercise.fromJson(Map<String, dynamic> json) {
     return MyExercise(
-      user: json['user'] as String,
-      movementName: json['movementName'] as String,
+      user: json['user'] as String? ?? currentUser,
+      movementId: json['movementId'] as String,
       setsOverride: json['setsOverride'] as int?,
       repsOverride: json['repsOverride'] as int?,
       cooldownOverride: json['cooldownOverride'] as int?,
-      starred: json['starred'] as bool,
+      starred: json['starred'] as bool? ?? false,
     );
   }
 }

@@ -38,10 +38,9 @@ class AppModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  MyExercise? findExercise(String movementName) {
+  MyExercise? findExercise(String movementId) {
     for (final exercise in exercises) {
-      if (exercise.user == currentUser &&
-          exercise.movementName == movementName) {
+      if (exercise.user == currentUser && exercise.movementId == movementId) {
         return exercise;
       }
     }
@@ -59,7 +58,7 @@ class AppModel extends ChangeNotifier {
   }
 
   Future<void> setStarred(MovementType movement, bool starred) async {
-    final current = findExercise(movement.name) ?? MyExercise.from(movement);
+    final current = findExercise(movement.id) ?? MyExercise.from(movement);
     await _saveExercise(current.copyWith(starred: starred));
   }
 
@@ -69,11 +68,11 @@ class AppModel extends ChangeNotifier {
     required int? reps,
     required int? cooldown,
   }) async {
-    final current = findExercise(movement.name) ?? MyExercise.from(movement);
+    final current = findExercise(movement.id) ?? MyExercise.from(movement);
     await _saveExercise(
       MyExercise(
         user: current.user,
-        movementName: current.movementName,
+        movementId: current.movementId,
         setsOverride: sets,
         repsOverride: reps,
         cooldownOverride: cooldown,
@@ -83,13 +82,13 @@ class AppModel extends ChangeNotifier {
   }
 
   Future<void> complete({
-    required String exerciseName,
+    required String movementId,
     required int sets,
     required int reps,
   }) async {
     final row = Completion(
       user: currentUser,
-      exerciseName: exerciseName,
+      movementId: movementId,
       completedAt: now(),
       sets: sets,
       reps: reps,
@@ -116,8 +115,7 @@ class AppModel extends ChangeNotifier {
     final next = [...exercises];
     final index = next.indexWhere(
       (row) =>
-          row.user == exercise.user &&
-          row.movementName == exercise.movementName,
+          row.user == exercise.user && row.movementId == exercise.movementId,
     );
     if (index < 0) {
       next.add(exercise);

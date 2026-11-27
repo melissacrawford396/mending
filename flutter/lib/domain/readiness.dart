@@ -15,11 +15,11 @@ bool isReady(DateTime now, DateTime? completedAt, int cooldownDays) {
 DateTime? latestCompletionAt(
   Iterable<Completion> rows,
   String user,
-  String exerciseName,
+  String movementId,
 ) {
   DateTime? latest;
   for (final row in rows) {
-    if (row.user != user || row.exerciseName != exerciseName) continue;
+    if (row.user != user || row.movementId != movementId) continue;
     if (latest == null || row.completedAt.isAfter(latest)) {
       latest = row.completedAt;
     }

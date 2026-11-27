@@ -58,9 +58,12 @@ Five separate types. The catalog, your list, the pictures, the completion log, a
 
 The shared setup for a movement.
 
+The records live in [flutter/assets/catalog/movements.json](flutter/assets/catalog/movements.json).
+
 | Field | Meaning |
 | --- | --- |
-| Name | Identity. Visuals, your list, the log, and reviews join on this |
+| Id | Identity, like `toe-flex`. Visuals, your list, the log, and reviews join on this. Never changes |
+| Name | Display text. Can change without touching saved rows |
 | Area | One `BodyArea` |
 | Default sets | Suggested sets |
 | Default reps | Suggested reps |
@@ -71,11 +74,11 @@ Changing a default does not rewrite your overrides or past log rows.
 
 ### Visuals
 
-Keyed by the movement type name. Holds how that movement is drawn. Swapping the picture replaces this object only.
+Keyed by the movement type id. Holds how that movement is drawn. Swapping the picture replaces this object only. The records live in [flutter/assets/catalog/visuals.json](flutter/assets/catalog/visuals.json).
 
 | Field | Meaning |
 | --- | --- |
-| Movement name | Key. The movement type name |
+| Movement id | Key. The movement type id |
 | Representation | The clip. The movement page has a player: play, pause, and a seek bar. It loops and has no sound |
 | Thumbnail | A still from the clip. Shown in lists so you can see what you are picking |
 
@@ -85,12 +88,12 @@ A movement with no clip shows a placeholder.
 
 Your list. Each row points at one movement type. Sets, reps, and cooldown can be overridden here. An override is stored on this row and leaves the movement type as it is.
 
-This is a reference plus optional overrides. A factory creates it: `MyExercise.from(movementType)` links the name and leaves the overrides empty, so the numbers still come from the movement type. Setting your own sets, reps, or cooldown fills that field on your row. An empty override keeps using the current default.
+This is a reference plus optional overrides. A factory creates it: `MyExercise.from(movementType)` links the id and leaves the overrides empty, so the numbers still come from the movement type. Setting your own sets, reps, or cooldown fills that field on your row. An empty override keeps using the current default.
 
 | Field | Meaning |
 | --- | --- |
 | User | |
-| Movement name | Points at the movement type |
+| Movement id | Points at the movement type |
 | Sets override | Empty means use the default |
 | Reps override | Empty means use the default |
 | Cooldown override | Empty means use the default |
@@ -104,12 +107,12 @@ You work from the starred rows. Each one shows its countdown. The ones whose coo
 
 ### Logging
 
-Append-only fact rows in a columnar store, so later analysis can scan them. One row each time you finish an exercise. Rows are added, not edited. User and exercise name are both columns.
+Append-only fact rows in a columnar store, so later analysis can scan them. One row each time you finish an exercise. Rows are added, not edited. User and movement id are both columns.
 
 | Column | Meaning |
 | --- | --- |
 | User | |
-| Exercise name | Movement type name |
+| Movement id | Movement type id |
 | Completed at | Datetime you finished it |
 | Sets | Sets you did |
 | Reps | Reps you did |
@@ -120,14 +123,14 @@ A review of these rows, grouped by area, shows which parts you actually practice
 
 Optional. When you come back to exercise, the app can ask whether a body part hurts from last time, and which exercise you think did it. Skipping the prompt writes nothing.
 
-The app presents the exercises from the last time you exercised. A saved answer is keyed by exercise name and the datetime you are answering now. It also stores the datetime of that earlier completion, so the answer stays tied to the session being reviewed.
+The app presents the exercises from the last time you exercised. A saved answer is keyed by movement id and the datetime you are answering now. It also stores the datetime of that earlier completion, so the answer stays tied to the session being reviewed.
 
 Append-only columnar rows, same as the log.
 
 | Column | Meaning |
 | --- | --- |
 | User | |
-| Exercise name | The exercise you think is involved |
+| Movement id | The exercise you think is involved |
 | Area | The body part you are answering about |
 | Reviewed at | Datetime you are in the app now. Part of the key |
 | Exercised at | Datetime of the completion being reviewed |
@@ -160,4 +163,4 @@ Parked on purpose.
 
 ## Open
 
-None. Sets, reps, and cooldowns in [movements.md](movements.md) are decided.
+None. Sets, reps, and cooldowns in [movements.json](flutter/assets/catalog/movements.json) are decided.

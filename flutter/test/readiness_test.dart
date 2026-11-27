@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mending/data/catalog.dart';
 import 'package:mending/domain/completion.dart';
 import 'package:mending/domain/effective.dart';
 import 'package:mending/domain/movement_type.dart';
@@ -8,8 +7,10 @@ import 'package:mending/domain/my_exercise.dart';
 import 'package:mending/domain/readiness.dart';
 import 'package:mending/ui/movement_visual_view.dart';
 
+import 'test_catalog.dart';
+
 void main() {
-  final arch = movementCatalog.byName('Arch roll');
+  final arch = testCatalog.byId('arch-roll');
 
   test('empty override follows the current default', () {
     final exercise = MyExercise.from(arch);
@@ -18,6 +19,7 @@ void main() {
     expect(effectiveCooldown(arch, exercise), 2);
 
     final changed = MovementType(
+      id: arch.id,
       name: arch.name,
       area: arch.area,
       defaultSets: 4,
@@ -33,13 +35,14 @@ void main() {
   test('an override stays when the default changes', () {
     final exercise = MyExercise(
       user: currentUser,
-      movementName: arch.name,
+      movementId: arch.id,
       setsOverride: 3,
       repsOverride: 6,
       cooldownOverride: 5,
       starred: true,
     );
     final changed = MovementType(
+      id: arch.id,
       name: arch.name,
       area: arch.area,
       defaultSets: 4,
@@ -66,20 +69,20 @@ void main() {
     final rows = [
       Completion(
         user: currentUser,
-        exerciseName: 'Toe flex',
+        movementId: 'toe-flex',
         completedAt: DateTime(2026, 11, 20, 8),
         sets: 1,
         reps: 10,
       ),
       Completion(
         user: currentUser,
-        exerciseName: 'Toe flex',
+        movementId: 'toe-flex',
         completedAt: DateTime(2026, 11, 21, 8),
         sets: 1,
         reps: 10,
       ),
     ];
-    final latest = latestCompletionAt(rows, currentUser, 'Toe flex');
+    final latest = latestCompletionAt(rows, currentUser, 'toe-flex');
     expect(latest, DateTime(2026, 11, 21, 8));
     expect(
       exerciseStatus(
@@ -118,12 +121,12 @@ void main() {
   test('every movement has a bundled clip and thumbnail', () async {
     TestWidgetsFlutterBinding.ensureInitialized();
     expect(
-      movementCatalog.visuals.map((visual) => visual.movementName),
-      movementCatalog.movements.map((movement) => movement.name),
+      testCatalog.visuals.map((visual) => visual.movementId),
+      testCatalog.movements.map((movement) => movement.id),
     );
-    for (final visual in movementCatalog.visuals) {
+    for (final visual in testCatalog.visuals) {
       for (final path in [visual.representation, visual.thumbnail]) {
-        expect(path, isNotNull, reason: visual.movementName);
+        expect(path, isNotNull, reason: visual.movementId);
         final bytes = await rootBundle.load(assetFor(path!));
         expect(bytes.lengthInBytes, greaterThan(0), reason: path);
       }

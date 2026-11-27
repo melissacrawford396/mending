@@ -12,6 +12,8 @@ import 'package:mending/state/app_model.dart';
 import 'package:mending/ui/body_figure.dart';
 import 'package:mending/ui/movement_visual_view.dart';
 
+import 'test_catalog.dart';
+
 void main() {
   Future<AppModel> start(
     WidgetTester tester, {
@@ -23,7 +25,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final model = AppModel(
       store: MemoryMendingStore(initial),
-      catalog: movementCatalog,
+      catalog: testCatalog,
       now: now,
     );
     await model.load();
@@ -71,7 +73,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(model.completions.single.exerciseName, 'Arch roll');
+    expect(model.completions.single.movementId, 'arch-roll');
     expect(model.completions.single.sets, 1);
     expect(model.completions.single.reps, 10);
     expect(find.text('Ready in 2 days'), findsWidgets);
@@ -89,12 +91,12 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('sets-add')));
     await tester.pump();
-    expect(model.findExercise('Arch roll')!.setsOverride, 2);
+    expect(model.findExercise('arch-roll')!.setsOverride, 2);
 
     await tester.tap(find.text('Use default'));
     await tester.pump();
-    expect(model.findExercise('Arch roll')!.setsOverride, isNull);
-    expect(model.findExercise('Arch roll')!.starred, isTrue);
+    expect(model.findExercise('arch-roll')!.setsOverride, isNull);
+    expect(model.findExercise('arch-roll')!.starred, isTrue);
   });
 
   testWidgets('tapping a body part opens its list and an empty back region', (
@@ -158,10 +160,7 @@ void main() {
     expect(small.topLeft.dx, lessThan(40));
     expect(small.topLeft.dy, lessThan(before.top));
 
-    await tester.tap(
-      find.bySemanticsLabel('Knees').first,
-      warnIfMissed: false,
-    );
+    await tester.tap(find.bySemanticsLabel('Knees').first, warnIfMissed: false);
     await settle(tester);
     expect(find.text('Feet'), findsOneWidget);
     expect(tester.getRect(find.byType(BodyFigure)), before);
@@ -217,7 +216,7 @@ void main() {
     tester,
   ) async {
     final model = await start(tester, size: const Size(1280, 800));
-    await model.setStarred(movementCatalog.byName('Arch roll'), false);
+    await model.setStarred(testCatalog.byId('arch-roll'), false);
     await tester.tap(find.text('Body'));
     await tester.pump();
     expect(
@@ -270,11 +269,11 @@ void main() {
     final store = MemoryMendingStore(
       StoreData(
         initialized: true,
-        exercises: seedExercises(movementCatalog),
+        exercises: seedExercises(testCatalog),
         completions: [
           Completion(
             user: currentUser,
-            exerciseName: 'Toe flex',
+            movementId: 'toe-flex',
             completedAt: DateTime(2026, 11, 24, 9),
             sets: 1,
             reps: 10,
@@ -306,11 +305,11 @@ void main() {
       tester,
       initial: StoreData(
         initialized: true,
-        exercises: seedExercises(movementCatalog),
+        exercises: seedExercises(testCatalog),
         completions: [
           Completion(
             user: currentUser,
-            exerciseName: 'Toe flex',
+            movementId: 'toe-flex',
             completedAt: completedAt,
             sets: 1,
             reps: 10,
@@ -328,7 +327,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     final review = model.reviews.single;
-    expect(review.exerciseName, 'Toe flex');
+    expect(review.movementId, 'toe-flex');
     expect(review.area, BodyArea.feet);
     expect(review.sensation, Sensation.fine);
     expect(review.exercisedAt.isAtSameMomentAs(completedAt), isTrue);

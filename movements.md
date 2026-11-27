@@ -1,96 +1,12 @@
-# First movements
+# Movements
 
-Concrete records for the first five movement types. Shapes match [planning.md](planning.md).
+The catalog lives in JSON under [flutter/assets/catalog/](flutter/assets/catalog/). The app reads it at startup. Edit the files there, not this page. Shapes match [planning.md](planning.md).
 
-Sets, reps, and cooldown are **Decided**. An empty override on your exercise still reads these defaults.
+- [movements.json](flutter/assets/catalog/movements.json): one record per movement type. Sets, reps, and cooldown are **Decided**.
+- [visuals.json](flutter/assets/catalog/visuals.json): the clip and thumbnail for each movement. How the clips get made is in [planning-unity.md](planning-unity.md).
 
-Visuals are keyed by name. How those clips get made is in [planning-unity.md](planning-unity.md). Your exercises are what `MyExercise.from(movementType)` would create: same name, no overrides, starred.
+Each movement has an `id`, like `toe-flex`. Visuals, your exercises, the log, and reviews point at that id. The `name` is display text and can change freely. Never change an `id` once it ships.
 
-## Movement types
+A missing optional field falls back to a default. A field the app does not know is ignored. `flutter test` checks that ids are unique and every reference points at a real movement.
 
-### Arch roll
-
-| Field | Value |
-| --- | --- |
-| Name | Arch roll |
-| Area | feet |
-| Default sets | 1 |
-| Default reps | 10 |
-| Default cooldown | 2 |
-| Description | Roll out the arch of your foot with a lacrosse ball. Use only the pressure of your foot. Do not stomp. Overdoing this will aggravate your foot. |
-
-Reps mean slow passes along the arch.
-
-### Toe flex
-
-| Field | Value |
-| --- | --- |
-| Name | Toe flex |
-| Area | feet |
-| Default sets | 1 |
-| Default reps | 10 |
-| Default cooldown | 1 |
-| Description | Cross one leg over the other knee, then flex your toes back and forth. Be gentle. You can use your hand to assist the movement. |
-
-### Small shoulder circles
-
-| Field | Value |
-| --- | --- |
-| Name | Small shoulder circles |
-| Area | shoulders |
-| Default sets | 1 |
-| Default reps | 10 |
-| Default cooldown | 1 |
-| Description | Put your arms out and make small circles. Do it both directions. |
-
-Reps mean circles in one direction. Then do the same number the other way.
-
-### Large arm circles
-
-| Field | Value |
-| --- | --- |
-| Name | Large arm circles |
-| Area | shoulders |
-| Default sets | 1 |
-| Default reps | 10 |
-| Default cooldown | 1 |
-| Description | Make large arm circles. Do both directions. |
-
-Reps mean circles in one direction. Then do the same number the other way.
-
-### Ankle stretch
-
-| Field | Value |
-| --- | --- |
-| Name | Ankle stretch |
-| Area | ankles |
-| Default sets | 2 |
-| Default reps | 1 |
-| Default cooldown | 1 |
-| Description | Step one foot in front of the other. Bend the front knee and keep the back foot flat on the ground. You should feel the stretch in the back foot's ankle, in the Achilles tendon. Switch which foot is back. |
-
-Sets mean one held stretch per side.
-
-## Visuals
-
-| Movement name | Representation | Thumbnail |
-| --- | --- | --- |
-| Arch roll | visuals/arch-roll.mp4 | visuals/thumbnails/arch-roll.jpg |
-| Toe flex | visuals/toe-flex.mp4 | visuals/thumbnails/toe-flex.jpg |
-| Small shoulder circles | visuals/small-shoulder-circles.mp4 | visuals/thumbnails/small-shoulder-circles.jpg |
-| Large arm circles | visuals/large-arm-circles.mp4 | visuals/thumbnails/large-arm-circles.jpg |
-| Ankle stretch | visuals/ankle-stretch.mp4 | visuals/thumbnails/ankle-stretch.jpg |
-
-Thumbnails come from `visuals/make-thumbnails.sh`. Run it again after re-recording a clip.
-
-## My exercises
-
-User is `me`. Overrides are empty, so the movement type defaults apply. Starred means these are the ones you are working on.
-
-| User | Movement name | Sets override | Reps override | Cooldown override | Starred |
-| --- | --- | --- | --- | --- | --- |
-| me | Arch roll | | | | yes |
-| me | Toe flex | | | | yes |
-| me | Small shoulder circles | | | | yes |
-| me | Large arm circles | | | | yes |
-| me | Ankle stretch | | | | yes |
+The first five movements are starred on first launch. That list is `starterMovementIds` in `flutter/lib/data/catalog.dart`.

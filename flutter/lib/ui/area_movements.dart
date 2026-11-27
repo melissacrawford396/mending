@@ -16,7 +16,7 @@ List<MovementType> sortedForArea(AppModel model, BodyArea area) {
   final movements = model.catalog.forArea(area);
   final starred = [
     for (final movement in movements)
-      if (model.findExercise(movement.name)?.starred ?? false) movement,
+      if (model.findExercise(movement.id)?.starred ?? false) movement,
   ];
   return [
     ...starred,
@@ -25,20 +25,14 @@ List<MovementType> sortedForArea(AppModel model, BodyArea area) {
   ];
 }
 
-/// Height of the pinned handle and title at the top of the pull-up sheet.
-const sheetHeaderHeight = 44.0;
-
-/// Height of one two-line movement row.
-const movementRowHeight = 72.0;
-
 /// The movement list on the Body tab.
 ///
 /// On a wide screen it is a side panel. With [area] null it shows a hint.
 /// With [active] false the list is a greyed preview that does not take taps.
 ///
-/// On a phone it is a pull-up sheet: pass the sheet's [scrollController].
-/// While [peeking], a tap on the title or a row calls [onExpand] instead of
-/// opening the movement.
+/// On a phone it is a pull-up sheet: pass the sheet's [scrollController] and
+/// the pinned header's height. While [peeking], a tap on the title or a row
+/// calls [onExpand] instead of opening the movement.
 class AreaMovementsPanel extends StatelessWidget {
   const AreaMovementsPanel({
     super.key,
@@ -46,14 +40,16 @@ class AreaMovementsPanel extends StatelessWidget {
     required this.active,
     this.onClose,
     this.scrollController,
+    this.headerHeight,
     this.peeking = false,
     this.onExpand,
-  });
+  }) : assert(scrollController == null || headerHeight != null);
 
   final BodyArea? area;
   final bool active;
   final VoidCallback? onClose;
   final ScrollController? scrollController;
+  final double? headerHeight;
   final bool peeking;
   final VoidCallback? onExpand;
 
@@ -79,6 +75,7 @@ class AreaMovementsPanel extends StatelessWidget {
             : _SheetList(
                 area: area,
                 controller: controller,
+                headerHeight: headerHeight!,
                 peeking: peeking,
                 onExpand: onExpand,
                 onClose: onClose,
@@ -103,6 +100,7 @@ class _SheetList extends StatelessWidget {
   const _SheetList({
     required this.area,
     required this.controller,
+    required this.headerHeight,
     required this.peeking,
     this.onExpand,
     this.onClose,
@@ -110,6 +108,7 @@ class _SheetList extends StatelessWidget {
 
   final BodyArea area;
   final ScrollController controller;
+  final double headerHeight;
   final bool peeking;
   final VoidCallback? onExpand;
   final VoidCallback? onClose;
@@ -124,6 +123,7 @@ class _SheetList extends StatelessWidget {
         SliverPersistentHeader(
           pinned: true,
           delegate: _SheetHeader(
+            height: headerHeight,
             label: area.label,
             onTap: peeking ? onExpand : null,
             onClose: onClose,
@@ -156,17 +156,24 @@ class _SheetList extends StatelessWidget {
 }
 
 class _SheetHeader extends SliverPersistentHeaderDelegate {
-  const _SheetHeader({required this.label, this.onTap, this.onClose});
+  const _SheetHeader({
+    required this.height,
+    required this.label,
+    this.onTap,
+    this.onClose,
+  });
 
+  /// Everything inside is sized from this, so the header scales with the page.
+  final double height;
   final String label;
   final VoidCallback? onTap;
   final VoidCallback? onClose;
 
   @override
-  double get minExtent => sheetHeaderHeight;
+  double get minExtent => height;
 
   @override
-  double get maxExtent => sheetHeaderHeight;
+  double get maxExtent => height;
 
   @override
   Widget build(
@@ -174,6 +181,9 @@ class _SheetHeader extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
+    final handleGap = height * 0.14;
+    final handleHeight = height * 0.09;
+    final button = height * 0.72;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -181,26 +191,31 @@ class _SheetHeader extends SliverPersistentHeaderDelegate {
         color: Colors.white,
         child: Column(
           children: [
-            const SizedBox(height: 6),
+            SizedBox(height: handleGap),
             Container(
-              width: 36,
-              height: 4,
+              width: height * 0.8,
+              height: handleHeight,
               decoration: BoxDecoration(
                 color: mendingInk.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(handleHeight / 2),
               ),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(left: 20, right: 4),
+                padding: EdgeInsets.only(
+                  left: height * 0.45,
+                  right: height * 0.1,
+                ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
                         label,
-                        style: const TextStyle(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
                           color: mendingBlue,
-                          fontSize: 16,
+                          fontSize: height * 0.36,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -209,12 +224,11 @@ class _SheetHeader extends SliverPersistentHeaderDelegate {
                       IconButton(
                         tooltip: 'Close',
                         onPressed: onClose,
-                        iconSize: 20,
-                        visualDensity: VisualDensity.compact,
+                        iconSize: button * 0.6,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints.tightFor(
-                          width: 34,
-                          height: 34,
+                        constraints: BoxConstraints.tightFor(
+                          width: button,
+                          height: button,
                         ),
                         icon: const Icon(Icons.close_rounded),
                       ),
@@ -230,7 +244,8 @@ class _SheetHeader extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_SheetHeader oldDelegate) {
-    return oldDelegate.label != label ||
+    return oldDelegate.height != height ||
+        oldDelegate.label != label ||
         oldDelegate.onTap != onTap ||
         oldDelegate.onClose != onClose;
   }
@@ -344,7 +359,7 @@ class _MovementTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final model = MendingScope.of(context);
-    final exercise = model.findExercise(movement.name);
+    final exercise = model.findExercise(movement.id);
     final starred = exercise?.starred ?? false;
     final sets = effectiveSets(movement, exercise);
     final reps = effectiveReps(movement, exercise);
@@ -355,7 +370,7 @@ class _MovementTile extends StatelessWidget {
             completedAt: latestCompletionAt(
               model.completions,
               currentUser,
-              movement.name,
+              movement.id,
             ),
             cooldownDays: cooldown,
           ).label
@@ -366,7 +381,7 @@ class _MovementTile extends StatelessWidget {
     );
     return ListTile(
       leading: MovementThumbnail(
-        visual: model.catalog.visualFor(movement.name),
+        visual: model.catalog.visualFor(movement.id),
       ),
       title: Text(
         movement.name,

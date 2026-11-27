@@ -59,6 +59,7 @@ flutter:
   # assets/visuals links to the repo's visuals/ folder. Files are listed one by
   # one so make-thumbnails.sh stays out of the bundle.
   assets:
+    - assets/catalog/
     - assets/visuals/arch-roll.mp4
     - assets/visuals/toe-flex.mp4
     - assets/visuals/small-shoulder-circles.mp4

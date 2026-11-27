@@ -28,8 +28,8 @@ class _Answer {
 class _ReviewPageState extends State<ReviewPage> {
   late final Map<String, _Answer> answers = {
     for (final item in widget.pending.items)
-      item.exerciseName: _Answer(
-        MendingScope.of(context).catalog.find(item.exerciseName)?.area ??
+      item.movementId: _Answer(
+        MendingScope.of(context).catalog.find(item.movementId)?.area ??
             BodyArea.other,
       ),
   };
@@ -57,9 +57,11 @@ class _ReviewPageState extends State<ReviewPage> {
               children: [
                 for (final item in widget.pending.items)
                   _ReviewCard(
-                    name: item.exerciseName,
+                    name:
+                        model.catalog.find(item.movementId)?.name ??
+                        item.movementId,
                     when: shortDate(item.completedAt),
-                    answer: answers[item.exerciseName]!,
+                    answer: answers[item.movementId]!,
                     onChanged: () => setState(() {}),
                   ),
               ],
@@ -98,13 +100,13 @@ class _ReviewPageState extends State<ReviewPage> {
     final reviewedAt = model.now();
     final rows = <ReviewRow>[];
     for (final item in widget.pending.items) {
-      final answer = answers[item.exerciseName]!;
+      final answer = answers[item.movementId]!;
       final sensation = answer.sensation;
       if (sensation == null) continue;
       rows.add(
         ReviewRow(
           user: currentUser,
-          exerciseName: item.exerciseName,
+          movementId: item.movementId,
           area: answer.area,
           reviewedAt: reviewedAt,
           exercisedAt: item.completedAt,

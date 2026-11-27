@@ -1,0 +1,63 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mending/data/catalog.dart';
+import 'package:mending/data/catalog_source.dart';
+import 'package:mending/domain/body_area.dart';
+
+import 'test_catalog.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('the bundled asset loads the same catalog as the file', () async {
+    final catalog = await AssetCatalogSource().load();
+    expect(
+      catalog.movements.map((movement) => movement.id),
+      testCatalog.movements.map((movement) => movement.id),
+    );
+    expect(catalog.visuals, hasLength(testCatalog.visuals.length));
+  });
+
+  test('ids are unique and every reference points at a movement', () {
+    final ids = testCatalog.movements.map((movement) => movement.id).toList();
+    expect(ids.toSet(), hasLength(ids.length));
+    for (final movement in testCatalog.movements) {
+      expect(movement.id, matches(RegExp(r'^[a-z0-9]+(-[a-z0-9]+)*$')));
+      expect(movement.name, isNotEmpty, reason: movement.id);
+      expect(movement.description, isNotEmpty, reason: movement.id);
+    }
+    for (final visual in testCatalog.visuals) {
+      expect(ids, contains(visual.movementId));
+    }
+    for (final id in starterMovementIds) {
+      expect(ids, contains(id));
+    }
+  });
+
+  test('missing optional fields use defaults and unknown ones are ignored', () {
+    final catalog = MovementCatalog.fromJson(
+      movements: {
+        'schemaVersion': 1,
+        'movements': [
+          {'id': 'neck-roll', 'area': 'neck', 'equipment': 'none'},
+        ],
+      },
+      visuals: {'schemaVersion': 1},
+    );
+    final movement = catalog.byId('neck-roll');
+    expect(movement.name, 'neck-roll');
+    expect(movement.area, BodyArea.neck);
+    expect(movement.defaultSets, 1);
+    expect(movement.description, isEmpty);
+    expect(catalog.visualFor('neck-roll').representation, isNull);
+  });
+
+  test('a newer catalog schema is refused', () {
+    expect(
+      () => MovementCatalog.fromJson(
+        movements: {'schemaVersion': catalogSchemaVersion + 1},
+        visuals: {'schemaVersion': 1},
+      ),
+      throwsFormatException,
+    );
+  });
+}

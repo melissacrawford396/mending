@@ -42,12 +42,12 @@ class _WorkingPageState extends State<WorkingPage> {
     final waiting = <_WorkRow>[];
     for (final exercise in model.exercises) {
       if (!exercise.starred || exercise.user != currentUser) continue;
-      final movement = model.catalog.find(exercise.movementName);
+      final movement = model.catalog.find(exercise.movementId);
       if (movement == null) continue;
       final completedAt = latestCompletionAt(
         model.completions,
         currentUser,
-        movement.name,
+        movement.id,
       );
       final cooldown = effectiveCooldown(movement, exercise);
       final status = exerciseStatus(
@@ -69,8 +69,8 @@ class _WorkingPageState extends State<WorkingPage> {
     }
     ready.sort(
       (a, b) => model.catalog
-          .indexOf(a.movement.name)
-          .compareTo(model.catalog.indexOf(b.movement.name)),
+          .indexOf(a.movement.id)
+          .compareTo(model.catalog.indexOf(b.movement.id)),
     );
     waiting.sort((a, b) {
       final aAt = readyAt(
@@ -180,7 +180,7 @@ class _WorkTile extends StatelessWidget {
                 MovementThumbnail(
                   visual: MendingScope.of(
                     context,
-                  ).catalog.visualFor(row.movement.name),
+                  ).catalog.visualFor(row.movement.id),
                   size: 64,
                 ),
                 const SizedBox(width: 14),

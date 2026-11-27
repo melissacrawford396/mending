@@ -17,14 +17,14 @@ class MovementPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final model = MendingScope.of(context);
     final exercise =
-        model.findExercise(movement.name) ?? MyExercise.from(movement);
+        model.findExercise(movement.id) ?? MyExercise.from(movement);
     final sets = effectiveSets(movement, exercise);
     final reps = effectiveReps(movement, exercise);
     final cooldown = effectiveCooldown(movement, exercise);
     final completedAt = latestCompletionAt(
       model.completions,
       currentUser,
-      movement.name,
+      movement.id,
     );
     final status = exerciseStatus(
       now: model.now(),
@@ -49,7 +49,7 @@ class MovementPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          MovementVisualView(visual: model.catalog.visualFor(movement.name)),
+          MovementVisualView(visual: model.catalog.visualFor(movement.id)),
           const SizedBox(height: 16),
           Text(
             movement.area.label,
@@ -153,7 +153,7 @@ class MovementPage extends StatelessWidget {
     );
     if (result == null || !context.mounted) return;
     await MendingScope.of(context).complete(
-      exerciseName: movement.name,
+      movementId: movement.id,
       sets: result.sets,
       reps: result.reps,
     );

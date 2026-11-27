@@ -64,7 +64,7 @@ Hover to find an exercise, and the clips in [movements.md](movements.md), both u
 | 4 | Ankle stretch | Split stance. The body lowers and stays upright so both feet stay on the ground. Front knee bends, back heel stays down, hold. The body rises, then the other side lowers the same way. | Both hips, both knees, and the back ankle. Only that ankle is highlighted. |
 | 5 | Arch roll | The right foot slides over a red ball that starts at the toe end. The ball rolls forward as the foot passes over it, and stays under the yellow sole. The underside of that foot is yellow. | A ball prop. The right hip and knee slide that foot over the ball. |
 
-**Decided:** Each movement has one short video from its fixed camera. Same figure, same light. The files live in `visuals/` and the visuals row in [movements.md](movements.md) points at them. `scripts/record-clips.sh` makes or updates them.
+**Decided:** Each movement has one short video from its fixed camera. Same figure, same light. The files live in `visuals/` and each entry in [visuals.json](flutter/assets/catalog/visuals.json) points at them. `scripts/record-clips.sh` makes or updates them.
 
 Hover to find an exercise stays later. The areas in [planning.md](planning.md) live on this figure. A shape starts light and turns blue on hover. Paired sides highlight together. A click opens the movements for that area.
 

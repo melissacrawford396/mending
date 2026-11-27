@@ -29,10 +29,10 @@ scripts/record-clips.sh "Toe flex" "Arch roll"  # only these
 
 ## Adding a movement
 
-1. Add the clip to `MovementLibrary.All()` in `unity/Mending/Assets/Scripts/Figure/MovementClip.cs`. Its name must match the movement name in `movements.md`.
+1. Add the clip to `MovementLibrary.All()` in `unity/Mending/Assets/Scripts/Figure/MovementClip.cs`. Its name must match the movement `name` in `flutter/assets/catalog/movements.json`.
 2. Add a crop for it in `shot_for` in `visuals/make-thumbnails.sh`.
 3. When the user asks to record it, run `scripts/record-clips.sh "<Movement name>"`. The file is the name in lowercase with dashes: `Toe flex` becomes `visuals/toe-flex.mp4`.
-4. After it is recorded, add the path to the Visuals table in `movements.md`.
+4. After it is recorded, add an entry to `flutter/assets/catalog/visuals.json` keyed by the movement `id`.
 
 ## Check the result
 
