@@ -21,6 +21,7 @@ public class ColorMenu : MonoBehaviour
     const string Prefix = "mending.color.";
     const string MainLightKey = "mending.light.main";
     const string FillLightKey = "mending.light.fill";
+    const string DefaultsKey = "mending.color.defaults";
 
     static readonly Color[] Palette =
     {
@@ -80,12 +81,7 @@ public class ColorMenu : MonoBehaviour
         };
 
         foreach (var target in targets)
-        {
             target.Default = target.Get();
-            Color saved;
-            if (Load(target, out saved))
-                target.Set(saved);
-        }
 
         foreach (var sceneLight in FindObjectsByType<Light>(FindObjectsSortMode.None))
         {
@@ -101,7 +97,34 @@ public class ColorMenu : MonoBehaviour
         if (fillLightDefault > 0.0001f)
             fillTint = new Color(ambient.r / fillLightDefault, ambient.g / fillLightDefault, ambient.b / fillLightDefault);
         mainLightDefault = sun != null ? sun.intensity : 0f;
+
+        ForgetPicksIfDefaultsChanged(ambient);
+        foreach (var target in targets)
+        {
+            Color saved;
+            if (Load(target, out saved))
+                target.Set(saved);
+        }
         SetLight(PlayerPrefs.GetFloat(MainLightKey, mainLightDefault), PlayerPrefs.GetFloat(FillLightKey, fillLightDefault), false);
+    }
+
+    void ForgetPicksIfDefaultsChanged(Color ambient)
+    {
+        var defaults = new StringBuilder();
+        foreach (var target in targets)
+            defaults.Append(ColorUtility.ToHtmlStringRGBA(target.Default)).Append('|');
+        defaults.Append(Format(mainLightDefault)).Append('|').Append(ColorUtility.ToHtmlStringRGB(ambient));
+
+        string current = defaults.ToString();
+        if (PlayerPrefs.GetString(DefaultsKey, "") == current)
+            return;
+
+        foreach (var target in targets)
+            PlayerPrefs.DeleteKey(Key(target));
+        PlayerPrefs.DeleteKey(MainLightKey);
+        PlayerPrefs.DeleteKey(FillLightKey);
+        PlayerPrefs.SetString(DefaultsKey, current);
+        PlayerPrefs.Save();
     }
 
     public bool Contains(Vector2 mouseFromBottom)

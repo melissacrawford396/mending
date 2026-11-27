@@ -48,8 +48,8 @@ public class CuteFigure : MonoBehaviour
         joints.Clear();
         parts.Clear();
 
-        limbMaterial = MakeMaterial(new Color(0.66f, 1f, 0.65f));
-        jointMaterial = MakeMaterial(new Color(0.3f, 0.54f, 0.31f));
+        limbMaterial = MakeMaterial(new Color(1f, 1f, 1f));
+        jointMaterial = MakeMaterial(new Color(0.6f, 0.8f, 0.98f));
         eyeMaterial = MakeFlat(new Color(0.08f, 0.08f, 0.09f));
         sparkleMaterial = MakeFlat(new Color(0.96f, 0.97f, 0.98f));
 

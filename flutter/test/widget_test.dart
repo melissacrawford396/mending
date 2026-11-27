@@ -106,8 +106,11 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Feet').first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Toe flex'), findsOneWidget);
+    expect(find.text('Arch roll'), findsOneWidget);
 
+    await tester.tap(find.text('Feet'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(find.text('Toe flex'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
@@ -122,6 +125,92 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('No movements for Upper back yet.'), findsOneWidget);
+  });
+
+  Future<void> settle(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+
+  Finder feet() => find.bySemanticsLabel('Feet').first;
+
+  testWidgets('a body part peeks its list without moving the body', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.tap(find.text('Body'));
+    await settle(tester);
+    final before = tester.getRect(find.byType(BodyFigure));
+
+    await tester.tap(feet());
+    await settle(tester);
+    final tabs = tester.getTopLeft(find.byType(NavigationBar)).dy;
+    final header = tester.getRect(find.text('Feet'));
+    final firstRow = tester.getTopLeft(find.text('Arch roll')).dy;
+    expect(header.bottom, lessThan(tabs));
+    expect(firstRow, lessThan(tabs));
+    expect(tester.getRect(find.byType(BodyFigure)), before);
+
+    await tester.tap(find.text('Feet'));
+    await settle(tester);
+    final small = tester.getRect(find.byType(BodyFigure));
+    expect(small.height, lessThan(before.height * 0.5));
+    expect(small.topLeft.dx, lessThan(40));
+    expect(small.topLeft.dy, lessThan(before.top));
+
+    await tester.tap(
+      find.bySemanticsLabel('Knees').first,
+      warnIfMissed: false,
+    );
+    await settle(tester);
+    expect(find.text('Feet'), findsOneWidget);
+    expect(tester.getRect(find.byType(BodyFigure)), before);
+
+    await tester.drag(find.text('Feet'), const Offset(0, -400));
+    await settle(tester);
+    expect(
+      tester.getSize(find.byType(BodyFigure)).height,
+      closeTo(small.height, 1),
+    );
+  });
+
+  testWidgets('tapping the part again or beside the body closes the list', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.tap(find.text('Body'));
+    await settle(tester);
+
+    await tester.tap(feet());
+    await settle(tester);
+    expect(find.text('Feet'), findsOneWidget);
+    await tester.tap(feet());
+    await settle(tester);
+    expect(find.text('Feet'), findsNothing);
+
+    await tester.tap(feet());
+    await settle(tester);
+    final figure = tester.getRect(find.byType(BodyFigure));
+    await tester.tapAt(Offset(figure.left + 4, figure.center.dy));
+    await settle(tester);
+    expect(find.text('Feet'), findsNothing);
+  });
+
+  testWidgets('double-tapping a part opens the full list', (tester) async {
+    await start(tester);
+    await tester.tap(find.text('Body'));
+    await settle(tester);
+    final before = tester.getRect(find.byType(BodyFigure));
+
+    await tester.tap(feet());
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(feet());
+    await settle(tester);
+    expect(find.text('Feet'), findsOneWidget);
+    expect(
+      tester.getSize(find.byType(BodyFigure)).height,
+      lessThan(before.height * 0.5),
+    );
   });
 
   testWidgets('hover previews movements, starred first, and click selects', (

@@ -1,0 +1,24 @@
+---
+description: How to change the Unity figure's default colors and light. Use when the user pastes a block like "Skin: new Color(...)" or asks to change the default skin, joint, ground, background, or light values.
+alwaysApply: false
+---
+
+# Figure colors
+
+Set the defaults with the script. Do not edit the color lines by hand.
+
+```bash
+scripts/set-colors.py <<'EOF'
+Skin: new Color(1f, 1f, 1f)
+Joints: new Color(0.6f, 0.8f, 0.98f)
+Ground: new Color(0.48f, 0.54f, 0.58f, 0.92f)
+Background: new Color(0.19f, 0.19f, 0.19f)
+Main light: 1.3f
+Fill light: new Color(0.92f, 0.95f, 1f)
+EOF
+```
+
+- Pass the user's block as-is. Any subset of lines works.
+- With no input piped in, the script reads the clipboard. The user can press Copy all in the Colors menu and run `scripts/set-colors.py`.
+- The Colors menu drops saved picks when the defaults change, so the new defaults show on the next Play.
+- Then tell the user to stop Play and press Play again. Do not re-record the videos unless the user explicitly asks.
