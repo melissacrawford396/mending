@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class FigureStage : MonoBehaviour
 {
@@ -37,9 +38,10 @@ public class FigureStage : MonoBehaviour
 
         cam = Camera.main;
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(1f, 1f, 1f);
+        cam.backgroundColor = new Color(0.19f, 0.19f, 0.19f);
         cam.fieldOfView = 32f;
         cam.nearClipPlane = 0.05f;
+        cam.GetUniversalAdditionalCameraData().renderPostProcessing = false;
 
         orbit = cam.gameObject.GetComponent<OrbitCamera>();
         if (orbit == null)
@@ -61,11 +63,11 @@ public class FigureStage : MonoBehaviour
         movements.player = player;
 
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.55f, 0.57f, 0.6f);
+        RenderSettings.ambientLight = new Color(0.92f, 0.95f, 1f);
         foreach (var sceneLight in FindObjectsByType<Light>(FindObjectsSortMode.None))
         {
             if (sceneLight.type == LightType.Directional)
-                sceneLight.intensity = 0.4f;
+                sceneLight.intensity = 1.3f;
         }
 
         var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -86,7 +88,7 @@ public class FigureStage : MonoBehaviour
         if (shader == null)
             shader = Shader.Find("Standard");
         var material = new Material(shader);
-        var color = new Color(0.45f, 0.62f, 0.95f, 0.92f);
+        var color = new Color(0.77f, 0.9f, 0.93f, 0.92f);
         if (material.HasProperty("_BaseColor"))
             material.SetColor("_BaseColor", color);
         if (material.HasProperty("_Color"))
@@ -204,7 +206,7 @@ public class FigureStage : MonoBehaviour
         if (mouse.leftButton.wasPressedThisFrame && !onMoves && movements != null)
             movements.Close();
         if (mouse.leftButton.wasPressedThisFrame && !onColors && colors != null)
-            colors.CloseList();
+            colors.Close();
 
         if (mouse.leftButton.wasPressedThisFrame)
         {

@@ -1,0 +1,43 @@
+---
+description: How to build the Flutter app as an APK for the user's phone, and how to run it on the Android emulator. Use when the user asks to build, export, install, or deploy the app, or to run it on Android.
+alwaysApply: false
+---
+
+# Build the Android app
+
+Run from `flutter/`. Use `required_permissions: ["all"]`.
+
+## APK for the phone
+
+```bash
+# Might take a couple of minutes
+flutter build apk --release
+```
+
+Output location: `build/app/outputs/flutter-apk/app-release.apk`
+
+Copy it to Downloads so it's easy to send to the phone:
+
+```bash
+rm -f ~/Downloads/app-release.apk && cp build/app/outputs/flutter-apk/app-release.apk ~/Downloads/app-release.apk
+```
+
+The release build is signed with the debug key. That is fine for installing by hand, not for the Play Store.
+
+## Run on the emulator
+
+```bash
+flutter emulators                          # list: Pixel_8_API_35, Medium_Phone_API_35
+flutter emulators --launch Pixel_8_API_35  # opens the emulator window
+flutter run                                # once it has booted; -d emulator-5554 if more than one device
+```
+
+In the `flutter run` terminal, `r` hot reloads, `R` restarts, `q` quits.
+
+From an agent shell, `flutter emulators --launch` dies when the command ends. Start the emulator as a background task instead:
+
+```bash
+~/Library/Android/sdk/emulator/emulator -avd Pixel_8_API_35 -no-snapshot-save -no-audio
+```
+
+`adb exec-out screencap` returns a black image on this emulator. Use `adb emu screenrecord screenshot /tmp/shot.png` (adb is `~/Library/Android/sdk/platform-tools/adb`).

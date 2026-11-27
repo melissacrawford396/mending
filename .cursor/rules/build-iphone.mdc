@@ -1,0 +1,50 @@
+---
+description: How to build the Flutter app for the user's iPhone and the iOS Simulator, including signing. Use when the user asks to build, install, or run the app on iPhone or iOS.
+alwaysApply: false
+---
+
+# Build the iPhone app
+
+Run from `flutter/`. Use `required_permissions: ["all"]`.
+
+An iPhone can't install a downloaded file the way Android installs an APK. The app goes on over a cable from this Mac, signed with the user's Apple ID.
+
+## Check it builds
+
+```bash
+flutter build ios --release --no-codesign
+```
+
+Output: `build/ios/iphoneos/Runner.app`. This can't be installed. It only shows that the code compiles.
+
+Plugins come through Swift Package Manager, so CocoaPods is not needed. The deployment target is iOS 15.0 because Xcode 27 rejects anything lower.
+
+## One-time setup
+
+1. `open ios/Runner.xcworkspace`
+2. Xcode > Settings > Accounts: add the Apple ID.
+3. Runner target > Signing & Capabilities: pick the Team ("Personal Team" for a free Apple ID). If Xcode says the bundle ID is taken, change `app.mending.mending` to something unique.
+4. On the iPhone, connect by cable and tap Trust. Then turn on Settings > Privacy & Security > Developer Mode and restart the phone.
+
+## Install on the iPhone
+
+```bash
+flutter devices                    # find the iPhone's id
+flutter run --release -d <iphone>  # builds, signs, installs, and opens it
+```
+
+Use `--release`. A debug build won't open from the home screen once the cable is unplugged.
+
+The first time, the iPhone blocks the app. Allow it in Settings > General > VPN & Device Management: tap the Apple ID, then Trust.
+
+With a free Apple ID the app stops opening after 7 days. Run the install again to renew it. A paid developer account ($99 a year) lasts a year and allows TestFlight.
+
+## iOS Simulator
+
+No simulator runtime is installed yet. The download is several GB:
+
+```bash
+xcodebuild -downloadPlatform iOS
+open -a Simulator
+flutter run   # pick the simulator
+```

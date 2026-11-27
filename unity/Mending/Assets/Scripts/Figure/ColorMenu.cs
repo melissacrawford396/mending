@@ -14,9 +14,13 @@ public class ColorMenu : MonoBehaviour
     const float Swatch = 30f;
     const float SwatchGap = 6f;
     const int Columns = 6;
-    const float TitleHeight = 22f;
+    const float TitleHeight = 26f;
+    const float BackWidth = 56f;
     const float SliderHeight = 40f;
+    const float MainLightMax = 2f;
     const string Prefix = "mending.color.";
+    const string MainLightKey = "mending.light.main";
+    const string FillLightKey = "mending.light.fill";
 
     static readonly Color[] Palette =
     {
@@ -41,6 +45,12 @@ public class ColorMenu : MonoBehaviour
     };
 
     Target[] targets;
+    Light sun;
+    float mainLight;
+    float mainLightDefault;
+    float fillLight;
+    float fillLightDefault;
+    Color fillTint = Color.white;
     bool listOpen;
     int editing = -1;
     float hue;
@@ -48,6 +58,11 @@ public class ColorMenu : MonoBehaviour
     float brightness;
     float copiedUntil;
     Texture2D hueStrip;
+
+    int LightIndex
+    {
+        get { return targets.Length; }
+    }
 
     public void Bind(CuteFigure figure, Camera cam, Material floor)
     {
@@ -71,6 +86,22 @@ public class ColorMenu : MonoBehaviour
             if (Load(target, out saved))
                 target.Set(saved);
         }
+
+        foreach (var sceneLight in FindObjectsByType<Light>(FindObjectsSortMode.None))
+        {
+            if (sceneLight.type == LightType.Directional)
+            {
+                sun = sceneLight;
+                break;
+            }
+        }
+
+        var ambient = RenderSettings.ambientLight;
+        fillLightDefault = Mathf.Max(ambient.r, Mathf.Max(ambient.g, ambient.b));
+        if (fillLightDefault > 0.0001f)
+            fillTint = new Color(ambient.r / fillLightDefault, ambient.g / fillLightDefault, ambient.b / fillLightDefault);
+        mainLightDefault = sun != null ? sun.intensity : 0f;
+        SetLight(PlayerPrefs.GetFloat(MainLightKey, mainLightDefault), PlayerPrefs.GetFloat(FillLightKey, fillLightDefault), false);
     }
 
     public bool Contains(Vector2 mouseFromBottom)
@@ -86,9 +117,11 @@ public class ColorMenu : MonoBehaviour
         return editing >= 0 && PanelRect().Contains(gui);
     }
 
-    public void CloseList()
+    public void Close()
     {
+        editing = -1;
         listOpen = false;
+        PlayerPrefs.Save();
     }
 
     void OnGUI()
@@ -96,17 +129,19 @@ public class ColorMenu : MonoBehaviour
         if (targets == null)
             return;
 
-        if (editing >= 0)
-            DrawPanel();
+        if (editing == LightIndex)
+            DrawLightPanel();
+        else if (editing >= 0)
+            DrawColorPanel();
         else if (listOpen)
             DrawList();
 
         if (FigureButtons.Button(ButtonRect(), "Colors"))
         {
-            if (editing >= 0)
-                Finish();
+            if (editing >= 0 || listOpen)
+                Close();
             else
-                listOpen = !listOpen;
+                listOpen = true;
         }
     }
 
@@ -125,16 +160,20 @@ public class ColorMenu : MonoBehaviour
             DrawSwatch(new Rect(row.x + 8f, row.y + 6f, 14f, 14f), targets[i].Get(), false, 3f);
         }
 
-        if (FigureButtons.Button(ListRow(targets.Length), Copied() ? "Copied" : "Copy all"))
+        if (FigureButtons.Button(ListRow(LightIndex), "Light"))
+            Open(LightIndex);
+
+        if (FigureButtons.Button(ListRow(LightIndex + 1), Copied() ? "Copied" : "Copy all"))
         {
             var all = new StringBuilder();
             foreach (var target in targets)
                 all.AppendLine(target.Name + ": " + Code(target.Get()));
+            all.AppendLine(LightCode());
             Copy(all.ToString());
         }
     }
 
-    void DrawPanel()
+    void DrawColorPanel()
     {
         var panel = PanelRect();
         var target = targets[editing];
@@ -143,8 +182,8 @@ public class ColorMenu : MonoBehaviour
         float x = panel.x + Pad;
         float y = panel.y + Pad;
         float inner = panel.width - Pad * 2f;
-        FigureButtons.Text(new Rect(x, y, inner - 52f, TitleHeight), target.Name, true);
-        DrawSwatch(new Rect(panel.xMax - Pad - 44f, y, 44f, TitleHeight), target.Get(), false, 5f);
+        TitleRow(x, y, inner - 52f, target.Name);
+        DrawSwatch(new Rect(panel.xMax - Pad - 44f, y + 2f, 44f, TitleHeight - 4f), target.Get(), false, 5f);
         y += TitleHeight + 8f;
 
         var current = target.Get();
@@ -165,9 +204,9 @@ public class ColorMenu : MonoBehaviour
 
         y += Rows() * (Swatch + SwatchGap) + 4f;
 
-        float nextHue = Slider(ref y, x, inner, "Hue", hue, true);
-        float nextSaturation = Slider(ref y, x, inner, "Saturation", saturation, false);
-        float nextBrightness = Slider(ref y, x, inner, "Brightness", brightness, false);
+        float nextHue = Slider(ref y, x, inner, "Hue", hue, 0f, 1f, true);
+        float nextSaturation = Slider(ref y, x, inner, "Saturation", saturation, 0f, 1f, false);
+        float nextBrightness = Slider(ref y, x, inner, "Brightness", brightness, 0f, 1f, false);
         if (nextHue != hue || nextSaturation != saturation || nextBrightness != brightness)
         {
             hue = nextHue;
@@ -178,34 +217,107 @@ public class ColorMenu : MonoBehaviour
         }
 
         y += 6f;
-        float half = (inner - 8f) * 0.5f;
-        if (FigureButtons.Button(new Rect(x, y, half, Height), "Reset"))
+        if (ResetDoneRow(x, y, inner))
         {
             target.Set(target.Default);
             PlayerPrefs.DeleteKey(Key(target));
             Color.RGBToHSV(target.Default, out hue, out saturation, out brightness);
         }
-
-        if (FigureButtons.Button(new Rect(x + half + 8f, y, half, Height), "Done"))
-            Finish();
     }
 
-    float Slider(ref float y, float x, float width, string label, float value, bool rainbow)
+    void DrawLightPanel()
+    {
+        var panel = PanelRect();
+        FigureButtons.Panel(panel);
+
+        float x = panel.x + Pad;
+        float y = panel.y + Pad;
+        float inner = panel.width - Pad * 2f;
+        TitleRow(x, y, inner, "Light");
+        y += TitleHeight + 10f;
+
+        float nextMain = Slider(ref y, x, inner, "Main light   " + Format(mainLight), mainLight, 0f, MainLightMax, false);
+        float nextFill = Slider(ref y, x, inner, "Fill light   " + Format(fillLight), fillLight, 0f, 1f, false);
+        if (nextMain != mainLight || nextFill != fillLight)
+            SetLight(nextMain, nextFill, true);
+
+        y += 4f;
+        FigureButtons.Text(new Rect(x, y, inner - 72f, Height), "Main " + Format(mainLight) + "   Fill " + Format(fillLight), false);
+        if (FigureButtons.Button(new Rect(panel.xMax - Pad - 64f, y, 64f, Height), Copied() ? "Copied" : "Copy"))
+            Copy(LightCode());
+        y += Height + 10f;
+
+        if (ResetDoneRow(x, y, inner))
+        {
+            SetLight(mainLightDefault, fillLightDefault, false);
+            PlayerPrefs.DeleteKey(MainLightKey);
+            PlayerPrefs.DeleteKey(FillLightKey);
+        }
+    }
+
+    void TitleRow(float x, float y, float width, string title)
+    {
+        if (FigureButtons.Button(new Rect(x, y, BackWidth, Height), "Back"))
+            ShowList();
+        FigureButtons.Text(new Rect(x + BackWidth + 10f, y, width - BackWidth - 10f, TitleHeight), title, true);
+    }
+
+    bool ResetDoneRow(float x, float y, float width)
+    {
+        float half = (width - 8f) * 0.5f;
+        bool reset = FigureButtons.Button(new Rect(x, y, half, Height), "Reset");
+        if (FigureButtons.Button(new Rect(x + half + 8f, y, half, Height), "Done"))
+            ShowList();
+        return reset;
+    }
+
+    float Slider(ref float y, float x, float width, string label, float value, float min, float max, bool rainbow)
     {
         FigureButtons.Text(new Rect(x, y, width, 18f), label, false);
         y += 18f;
         if (rainbow)
             GUI.DrawTexture(new Rect(x, y + 14f, width, 4f), HueStrip(), ScaleMode.StretchToFill, false);
-        float next = GUI.HorizontalSlider(new Rect(x, y, width, 16f), value, 0f, 1f);
+        float next = GUI.HorizontalSlider(new Rect(x, y, width, 16f), value, min, max);
         y += SliderHeight - 18f;
         return next;
+    }
+
+    void SetLight(float main, float fill, bool save)
+    {
+        mainLight = Mathf.Clamp(main, 0f, MainLightMax);
+        fillLight = Mathf.Clamp01(fill);
+        if (sun != null)
+            sun.intensity = mainLight;
+        RenderSettings.ambientLight = FillColor();
+        if (!save)
+            return;
+        PlayerPrefs.SetFloat(MainLightKey, mainLight);
+        PlayerPrefs.SetFloat(FillLightKey, fillLight);
+    }
+
+    Color FillColor()
+    {
+        return new Color(fillTint.r * fillLight, fillTint.g * fillLight, fillTint.b * fillLight, 1f);
+    }
+
+    string LightCode()
+    {
+        return "Main light: " + Number(mainLight) + "\nFill light: " + Code(FillColor());
     }
 
     void Open(int index)
     {
         editing = index;
         listOpen = false;
-        Color.RGBToHSV(targets[index].Get(), out hue, out saturation, out brightness);
+        if (index < targets.Length)
+            Color.RGBToHSV(targets[index].Get(), out hue, out saturation, out brightness);
+    }
+
+    void ShowList()
+    {
+        editing = -1;
+        listOpen = true;
+        PlayerPrefs.Save();
     }
 
     void Choose(Target target, Color color)
@@ -213,13 +325,6 @@ public class ColorMenu : MonoBehaviour
         target.Set(color);
         Save(target);
         Color.RGBToHSV(color, out hue, out saturation, out brightness);
-    }
-
-    void Finish()
-    {
-        editing = -1;
-        listOpen = false;
-        PlayerPrefs.Save();
     }
 
     static void DrawSwatch(Rect rect, Color color, bool selected, float radius)
@@ -254,9 +359,12 @@ public class ColorMenu : MonoBehaviour
 
     static string Numbers(Color color)
     {
-        return "R " + color.r.ToString("0.00", CultureInfo.InvariantCulture)
-            + "   G " + color.g.ToString("0.00", CultureInfo.InvariantCulture)
-            + "   B " + color.b.ToString("0.00", CultureInfo.InvariantCulture);
+        return "R " + Format(color.r) + "   G " + Format(color.g) + "   B " + Format(color.b);
+    }
+
+    static string Format(float value)
+    {
+        return value.ToString("0.00", CultureInfo.InvariantCulture);
     }
 
     static string Code(Color color)
@@ -307,14 +415,16 @@ public class ColorMenu : MonoBehaviour
     Rect ListRect()
     {
         var first = ListRow(0);
-        var last = ListRow(targets.Length);
+        var last = ListRow(LightIndex + 1);
         return new Rect(first.x, first.y, ListWidth, last.yMax - first.y);
     }
 
     Rect PanelRect()
     {
         var button = ButtonRect();
-        float height = Pad + TitleHeight + 8f + Height + 10f + Rows() * (Swatch + SwatchGap) + 4f + SliderHeight * 3f + 6f + Height + Pad;
+        float height = editing == LightIndex
+            ? Pad + TitleHeight + 10f + SliderHeight * 2f + 4f + Height + 10f + Height + Pad
+            : Pad + TitleHeight + 8f + Height + 10f + Rows() * (Swatch + SwatchGap) + 4f + SliderHeight * 3f + 6f + Height + Pad;
         return new Rect(button.xMax - PanelWidth, button.yMax + 6f, PanelWidth, height);
     }
 
