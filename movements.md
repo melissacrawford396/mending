@@ -2,9 +2,9 @@
 
 Concrete records for the first five movement types. Shapes match [planning.md](planning.md).
 
-Sets, reps, and cooldown are **Proposed**. You described the action, not the numbers. An empty override on your exercise still reads these defaults.
+Sets, reps, and cooldown are **Decided**. An empty override on your exercise still reads these defaults.
 
-Visuals are keyed by name and empty until a clip exists. How those clips get made is in [planning-unity.md](planning-unity.md). Your exercises are what `MyExercise.from(movementType)` would create: same name, no overrides, starred.
+Visuals are keyed by name. How those clips get made is in [planning-unity.md](planning-unity.md). Your exercises are what `MyExercise.from(movementType)` would create: same name, no overrides, starred.
 
 ## Movement types
 
@@ -73,13 +73,15 @@ Sets mean one held stretch per side.
 
 ## Visuals
 
-| Movement name | Representation |
-| --- | --- |
-| Arch roll | |
-| Toe flex | |
-| Small shoulder circles | |
-| Large arm circles | |
-| Ankle stretch | |
+| Movement name | Representation | Thumbnail |
+| --- | --- | --- |
+| Arch roll | visuals/arch-roll.mp4 | visuals/thumbnails/arch-roll.jpg |
+| Toe flex | visuals/toe-flex.mp4 | visuals/thumbnails/toe-flex.jpg |
+| Small shoulder circles | visuals/small-shoulder-circles.mp4 | visuals/thumbnails/small-shoulder-circles.jpg |
+| Large arm circles | visuals/large-arm-circles.mp4 | visuals/thumbnails/large-arm-circles.jpg |
+| Ankle stretch | visuals/ankle-stretch.mp4 | visuals/thumbnails/ankle-stretch.jpg |
+
+Thumbnails come from `visuals/make-thumbnails.sh`. Run it again after re-recording a clip.
 
 ## My exercises
 
