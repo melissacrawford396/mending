@@ -6,12 +6,15 @@ import '../domain/completion.dart';
 import '../domain/my_exercise.dart';
 import '../domain/review_row.dart';
 
-/// Local snapshot. Completions and reviews are append-only rows.
+const _keep = Object();
+
+/// Local snapshot. New sessions are appended. Edits and deletes rewrite the log.
 class StoreData {
   const StoreData({
     required this.initialized,
     required this.exercises,
     required this.completions,
+    this.deleted = const [],
     required this.reviews,
     required this.skippedReviewSession,
   });
@@ -27,14 +30,36 @@ class StoreData {
   final bool initialized;
   final List<MyExercise> exercises;
   final List<Completion> completions;
+  final List<DeletedCompletion> deleted;
   final List<ReviewRow> reviews;
   final String? skippedReviewSession;
+
+  StoreData copyWith({
+    bool? initialized,
+    List<MyExercise>? exercises,
+    List<Completion>? completions,
+    List<DeletedCompletion>? deleted,
+    List<ReviewRow>? reviews,
+    Object? skippedReviewSession = _keep,
+  }) {
+    return StoreData(
+      initialized: initialized ?? this.initialized,
+      exercises: exercises ?? this.exercises,
+      completions: completions ?? this.completions,
+      deleted: deleted ?? this.deleted,
+      reviews: reviews ?? this.reviews,
+      skippedReviewSession: identical(skippedReviewSession, _keep)
+          ? this.skippedReviewSession
+          : skippedReviewSession as String?,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'schemaVersion': storeSchemaVersion,
     'initialized': initialized,
     'exercises': [for (final row in exercises) row.toJson()],
     'completions': [for (final row in completions) row.toJson()],
+    'deleted': [for (final row in deleted) row.toJson()],
     'reviews': [for (final row in reviews) row.toJson()],
     'skippedReviewSession': skippedReviewSession,
   };
@@ -45,6 +70,7 @@ class StoreData {
       initialized: json['initialized'] as bool? ?? false,
       exercises: _rows(json['exercises'], MyExercise.fromJson),
       completions: _rows(json['completions'], Completion.fromJson),
+      deleted: _rows(json['deleted'], DeletedCompletion.fromJson),
       reviews: _rows(json['reviews'], ReviewRow.fromJson),
       skippedReviewSession: json['skippedReviewSession'] as String?,
     );
@@ -113,6 +139,13 @@ abstract class MendingStore {
   Future<void> appendCompletion(Completion row);
   Future<void> appendReviews(List<ReviewRow> rows);
   Future<void> setSkippedReviewSession(String sessionKey);
+
+  /// Replaces the log in one write. Exercises and the skip flag stay as they are.
+  Future<void> saveLog({
+    required List<Completion> completions,
+    required List<DeletedCompletion> deleted,
+    required List<ReviewRow> reviews,
+  });
 }
 
 /// In-memory store for tests and the first frame before prefs load.
@@ -132,49 +165,39 @@ class MemoryMendingStore implements MendingStore {
   @override
   Future<void> saveExercises(List<MyExercise> exercises) async {
     _guard();
-    _cache = StoreData(
-      initialized: true,
-      exercises: List.of(exercises),
-      completions: _cache.completions,
-      reviews: _cache.reviews,
-      skippedReviewSession: _cache.skippedReviewSession,
-    );
+    _cache = _cache.copyWith(initialized: true, exercises: List.of(exercises));
   }
 
   @override
   Future<void> appendCompletion(Completion row) async {
     _guard();
-    _cache = StoreData(
-      initialized: _cache.initialized,
-      exercises: _cache.exercises,
-      completions: [..._cache.completions, row],
-      reviews: _cache.reviews,
-      skippedReviewSession: _cache.skippedReviewSession,
-    );
+    _cache = _cache.copyWith(completions: [..._cache.completions, row]);
   }
 
   @override
   Future<void> appendReviews(List<ReviewRow> rows) async {
     _guard();
     if (rows.isEmpty) return;
-    _cache = StoreData(
-      initialized: _cache.initialized,
-      exercises: _cache.exercises,
-      completions: _cache.completions,
-      reviews: [..._cache.reviews, ...rows],
-      skippedReviewSession: _cache.skippedReviewSession,
-    );
+    _cache = _cache.copyWith(reviews: [..._cache.reviews, ...rows]);
   }
 
   @override
   Future<void> setSkippedReviewSession(String sessionKey) async {
     _guard();
-    _cache = StoreData(
-      initialized: _cache.initialized,
-      exercises: _cache.exercises,
-      completions: _cache.completions,
-      reviews: _cache.reviews,
-      skippedReviewSession: sessionKey,
+    _cache = _cache.copyWith(skippedReviewSession: sessionKey);
+  }
+
+  @override
+  Future<void> saveLog({
+    required List<Completion> completions,
+    required List<DeletedCompletion> deleted,
+    required List<ReviewRow> reviews,
+  }) async {
+    _guard();
+    _cache = _cache.copyWith(
+      completions: List.of(completions),
+      deleted: List.of(deleted),
+      reviews: List.of(reviews),
     );
   }
 
@@ -190,12 +213,13 @@ StoreData _copy(StoreData data) {
     initialized: data.initialized,
     exercises: List.of(data.exercises),
     completions: List.of(data.completions),
+    deleted: List.of(data.deleted),
     reviews: List.of(data.reviews),
     skippedReviewSession: data.skippedReviewSession,
   );
 }
 
-/// Rewrites one document, but completion and review rows are only appended.
+/// Rewrites one document. New sessions are appended. Edits replace the log.
 class PrefsMendingStore implements MendingStore {
   PrefsMendingStore({this._preferences});
 
@@ -223,26 +247,14 @@ class PrefsMendingStore implements MendingStore {
   @override
   Future<void> saveExercises(List<MyExercise> exercises) async {
     _guard();
-    _cache = StoreData(
-      initialized: true,
-      exercises: List.of(exercises),
-      completions: _cache.completions,
-      reviews: _cache.reviews,
-      skippedReviewSession: _cache.skippedReviewSession,
-    );
+    _cache = _cache.copyWith(initialized: true, exercises: List.of(exercises));
     await _write();
   }
 
   @override
   Future<void> appendCompletion(Completion row) async {
     _guard();
-    _cache = StoreData(
-      initialized: _cache.initialized,
-      exercises: _cache.exercises,
-      completions: [..._cache.completions, row],
-      reviews: _cache.reviews,
-      skippedReviewSession: _cache.skippedReviewSession,
-    );
+    _cache = _cache.copyWith(completions: [..._cache.completions, row]);
     await _write();
   }
 
@@ -250,25 +262,28 @@ class PrefsMendingStore implements MendingStore {
   Future<void> appendReviews(List<ReviewRow> rows) async {
     _guard();
     if (rows.isEmpty) return;
-    _cache = StoreData(
-      initialized: _cache.initialized,
-      exercises: _cache.exercises,
-      completions: _cache.completions,
-      reviews: [..._cache.reviews, ...rows],
-      skippedReviewSession: _cache.skippedReviewSession,
-    );
+    _cache = _cache.copyWith(reviews: [..._cache.reviews, ...rows]);
     await _write();
   }
 
   @override
   Future<void> setSkippedReviewSession(String sessionKey) async {
     _guard();
-    _cache = StoreData(
-      initialized: _cache.initialized,
-      exercises: _cache.exercises,
-      completions: _cache.completions,
-      reviews: _cache.reviews,
-      skippedReviewSession: sessionKey,
+    _cache = _cache.copyWith(skippedReviewSession: sessionKey);
+    await _write();
+  }
+
+  @override
+  Future<void> saveLog({
+    required List<Completion> completions,
+    required List<DeletedCompletion> deleted,
+    required List<ReviewRow> reviews,
+  }) async {
+    _guard();
+    _cache = _cache.copyWith(
+      completions: List.of(completions),
+      deleted: List.of(deleted),
+      reviews: List.of(reviews),
     );
     await _write();
   }
