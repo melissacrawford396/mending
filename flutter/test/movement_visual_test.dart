@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mending/data/catalog.dart';
 import 'package:mending/ui/movement_visual_view.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+
+import 'test_catalog.dart';
 
 class FakeVideoPlatform extends VideoPlayerPlatform {
   var playing = false;
@@ -71,9 +72,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MovementVisualView(
-            visual: movementCatalog.visualFor('Arch roll'),
-          ),
+          body: MovementVisualView(visual: testCatalog.visualFor('arch-roll')),
         ),
       ),
     );

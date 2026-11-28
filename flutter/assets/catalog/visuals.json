@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "visuals": [
+    {
+      "movementId": "arch-roll",
+      "representation": "visuals/arch-roll.mp4",
+      "thumbnail": "visuals/thumbnails/arch-roll.jpg"
+    },
+    {
+      "movementId": "toe-flex",
+      "representation": "visuals/toe-flex.mp4",
+      "thumbnail": "visuals/thumbnails/toe-flex.jpg"
+    },
+    {
+      "movementId": "small-shoulder-circles",
+      "representation": "visuals/small-shoulder-circles.mp4",
+      "thumbnail": "visuals/thumbnails/small-shoulder-circles.jpg"
+    },
+    {
+      "movementId": "large-arm-circles",
+      "representation": "visuals/large-arm-circles.mp4",
+      "thumbnail": "visuals/thumbnails/large-arm-circles.jpg"
+    },
+    {
+      "movementId": "ankle-stretch",
+      "representation": "visuals/ankle-stretch.mp4",
+      "thumbnail": "visuals/thumbnails/ankle-stretch.jpg"
+    }
+  ]
+}

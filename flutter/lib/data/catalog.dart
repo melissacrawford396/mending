@@ -3,30 +3,51 @@ import '../domain/movement_type.dart';
 import '../domain/movement_visual.dart';
 import '../domain/my_exercise.dart';
 
+/// Newest catalog file layout this build can read.
+const catalogSchemaVersion = 1;
+
 class MovementCatalog {
   const MovementCatalog({required this.movements, required this.visuals});
+
+  factory MovementCatalog.fromJson({
+    required Map<String, dynamic> movements,
+    required Map<String, dynamic> visuals,
+  }) {
+    _checkVersion(movements);
+    _checkVersion(visuals);
+    return MovementCatalog(
+      movements: [
+        for (final row in movements['movements'] as List? ?? const [])
+          MovementType.fromJson(row as Map<String, dynamic>),
+      ],
+      visuals: [
+        for (final row in visuals['visuals'] as List? ?? const [])
+          MovementVisual.fromJson(row as Map<String, dynamic>),
+      ],
+    );
+  }
 
   final List<MovementType> movements;
   final List<MovementVisual> visuals;
 
-  MovementType byName(String name) {
-    final movement = find(name);
+  MovementType byId(String id) {
+    final movement = find(id);
     if (movement == null) {
-      throw ArgumentError('Unknown movement: $name');
+      throw ArgumentError('Unknown movement: $id');
     }
     return movement;
   }
 
-  MovementType? find(String name) {
+  MovementType? find(String id) {
     for (final movement in movements) {
-      if (movement.name == name) return movement;
+      if (movement.id == id) return movement;
     }
     return null;
   }
 
-  int indexOf(String name) {
+  int indexOf(String id) {
     for (var i = 0; i < movements.length; i++) {
-      if (movements[i].name == name) return i;
+      if (movements[i].id == id) return i;
     }
     return -1;
   }
@@ -38,112 +59,36 @@ class MovementCatalog {
     ];
   }
 
-  MovementVisual visualFor(String name) {
+  MovementVisual visualFor(String id) {
     for (final visual in visuals) {
-      if (visual.movementName == name) return visual;
+      if (visual.movementId == id) return visual;
     }
-    return MovementVisual(movementName: name);
+    return MovementVisual(movementId: id);
   }
 }
 
-/// First five movement types. Sets, reps, and cooldowns are decided.
-const movementCatalog = MovementCatalog(
-  movements: [
-    MovementType(
-      name: 'Arch roll',
-      area: BodyArea.feet,
-      defaultSets: 1,
-      defaultReps: 10,
-      defaultCooldown: 2,
-      description:
-          'Roll out the arch of your foot with a lacrosse ball. '
-          'Use only the pressure of your foot. Do not stomp. '
-          'Overdoing this will aggravate your foot. '
-          'Reps mean slow passes along the arch.',
-    ),
-    MovementType(
-      name: 'Toe flex',
-      area: BodyArea.feet,
-      defaultSets: 1,
-      defaultReps: 10,
-      defaultCooldown: 1,
-      description:
-          'Cross one leg over the other knee, then flex your toes back and forth. '
-          'Be gentle. You can use your hand to assist the movement.',
-    ),
-    MovementType(
-      name: 'Small shoulder circles',
-      area: BodyArea.shoulders,
-      defaultSets: 1,
-      defaultReps: 10,
-      defaultCooldown: 1,
-      description:
-          'Put your arms out and make small circles. Do it both directions. '
-          'Reps mean circles in one direction. Then do the same number the other way.',
-    ),
-    MovementType(
-      name: 'Large arm circles',
-      area: BodyArea.shoulders,
-      defaultSets: 1,
-      defaultReps: 10,
-      defaultCooldown: 1,
-      description:
-          'Make large arm circles. Do both directions. '
-          'Reps mean circles in one direction. Then do the same number the other way.',
-    ),
-    MovementType(
-      name: 'Ankle stretch',
-      area: BodyArea.ankles,
-      defaultSets: 2,
-      defaultReps: 1,
-      defaultCooldown: 1,
-      description:
-          'Step one foot in front of the other. Bend the front knee and keep the back foot flat on the ground. '
-          "You should feel the stretch in the back foot's ankle, in the Achilles tendon. "
-          'Switch which foot is back. '
-          'Sets mean one held stretch per side.',
-    ),
-  ],
-  visuals: [
-    MovementVisual(
-      movementName: 'Arch roll',
-      representation: 'visuals/arch-roll.mp4',
-      thumbnail: 'visuals/thumbnails/arch-roll.jpg',
-    ),
-    MovementVisual(
-      movementName: 'Toe flex',
-      representation: 'visuals/toe-flex.mp4',
-      thumbnail: 'visuals/thumbnails/toe-flex.jpg',
-    ),
-    MovementVisual(
-      movementName: 'Small shoulder circles',
-      representation: 'visuals/small-shoulder-circles.mp4',
-      thumbnail: 'visuals/thumbnails/small-shoulder-circles.jpg',
-    ),
-    MovementVisual(
-      movementName: 'Large arm circles',
-      representation: 'visuals/large-arm-circles.mp4',
-      thumbnail: 'visuals/thumbnails/large-arm-circles.jpg',
-    ),
-    MovementVisual(
-      movementName: 'Ankle stretch',
-      representation: 'visuals/ankle-stretch.mp4',
-      thumbnail: 'visuals/thumbnails/ankle-stretch.jpg',
-    ),
-  ],
-);
+void _checkVersion(Map<String, dynamic> json) {
+  final version = json['schemaVersion'] as int? ?? 1;
+  if (version > catalogSchemaVersion) {
+    throw FormatException(
+      'Catalog schema $version is newer than $catalogSchemaVersion',
+    );
+  }
+}
 
 /// The first working list. New catalog entries are not added here.
+const starterMovementIds = [
+  'arch-roll',
+  'toe-flex',
+  'small-shoulder-circles',
+  'large-arm-circles',
+  'ankle-stretch',
+];
+
 List<MyExercise> seedExercises(MovementCatalog catalog) {
-  const names = [
-    'Arch roll',
-    'Toe flex',
-    'Small shoulder circles',
-    'Large arm circles',
-    'Ankle stretch',
-  ];
   return [
-    for (final name in names)
-      MyExercise.from(catalog.byName(name), starred: true),
+    for (final id in starterMovementIds)
+      if (catalog.find(id) case final movement?)
+        MyExercise.from(movement, starred: true),
   ];
 }

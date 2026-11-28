@@ -1,11 +1,12 @@
 import 'body_area.dart';
+import 'my_exercise.dart';
 import 'sensation.dart';
 
 /// One append-only answer about an earlier completion.
 class ReviewRow {
   const ReviewRow({
     required this.user,
-    required this.exerciseName,
+    required this.movementId,
     required this.area,
     required this.reviewedAt,
     required this.exercisedAt,
@@ -13,7 +14,7 @@ class ReviewRow {
   });
 
   final String user;
-  final String exerciseName;
+  final String movementId;
   final BodyArea area;
   final DateTime reviewedAt;
   final DateTime exercisedAt;
@@ -21,7 +22,7 @@ class ReviewRow {
 
   Map<String, dynamic> toJson() => {
     'user': user,
-    'exerciseName': exerciseName,
+    'movementId': movementId,
     'area': area.name,
     'reviewedAt': reviewedAt.toUtc().toIso8601String(),
     'exercisedAt': exercisedAt.toUtc().toIso8601String(),
@@ -30,8 +31,8 @@ class ReviewRow {
 
   factory ReviewRow.fromJson(Map<String, dynamic> json) {
     return ReviewRow(
-      user: json['user'] as String,
-      exerciseName: json['exerciseName'] as String,
+      user: json['user'] as String? ?? currentUser,
+      movementId: json['movementId'] as String,
       area: BodyArea.parse(json['area'] as String),
       reviewedAt: DateTime.parse(json['reviewedAt'] as String),
       exercisedAt: DateTime.parse(json['exercisedAt'] as String),

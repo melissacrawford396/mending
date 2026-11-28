@@ -31,6 +31,7 @@ class StoreData {
   final String? skippedReviewSession;
 
   Map<String, dynamic> toJson() => {
+    'schemaVersion': storeSchemaVersion,
     'initialized': initialized,
     'exercises': [for (final row in exercises) row.toJson()],
     'completions': [for (final row in completions) row.toJson()],
@@ -38,24 +39,72 @@ class StoreData {
     'skippedReviewSession': skippedReviewSession,
   };
 
-  factory StoreData.fromJson(Map<String, dynamic> json) {
+  factory StoreData.fromJson(Map<String, dynamic> raw) {
+    final json = _migrate(raw);
     return StoreData(
       initialized: json['initialized'] as bool? ?? false,
-      exercises: [
-        for (final row in json['exercises'] as List? ?? const [])
-          MyExercise.fromJson(row as Map<String, dynamic>),
-      ],
-      completions: [
-        for (final row in json['completions'] as List? ?? const [])
-          Completion.fromJson(row as Map<String, dynamic>),
-      ],
-      reviews: [
-        for (final row in json['reviews'] as List? ?? const [])
-          ReviewRow.fromJson(row as Map<String, dynamic>),
-      ],
+      exercises: _rows(json['exercises'], MyExercise.fromJson),
+      completions: _rows(json['completions'], Completion.fromJson),
+      reviews: _rows(json['reviews'], ReviewRow.fromJson),
       skippedReviewSession: json['skippedReviewSession'] as String?,
     );
   }
+}
+
+/// Layout written by this build. Bump it and add a step to [_migrate] when a
+/// saved field is renamed or changes meaning. Added fields only need a default
+/// in their `fromJson`.
+const storeSchemaVersion = 2;
+
+Map<String, dynamic> _migrate(Map<String, dynamic> json) {
+  var data = json;
+  if ((data['schemaVersion'] as int? ?? 1) < 2) data = _namesToIds(data);
+  return data;
+}
+
+/// Version 1 joined rows on the display name. Only these five existed then.
+const _v1Ids = {
+  'Arch roll': 'arch-roll',
+  'Toe flex': 'toe-flex',
+  'Small shoulder circles': 'small-shoulder-circles',
+  'Large arm circles': 'large-arm-circles',
+  'Ankle stretch': 'ankle-stretch',
+};
+
+Map<String, dynamic> _namesToIds(Map<String, dynamic> json) {
+  List<Map<String, dynamic>> rename(String table, String oldField) {
+    return [
+      for (final row in json[table] as List? ?? const [])
+        if (row case final Map<String, dynamic> row)
+          {
+            for (final entry in row.entries)
+              if (entry.key != oldField) entry.key: entry.value,
+            'movementId': _v1Ids[row[oldField]] ?? row[oldField],
+          },
+    ];
+  }
+
+  return {
+    ...json,
+    'schemaVersion': 2,
+    'exercises': rename('exercises', 'movementName'),
+    'completions': rename('completions', 'exerciseName'),
+    'reviews': rename('reviews', 'exerciseName'),
+  };
+}
+
+/// A row this build cannot read is skipped so the rest still loads. It is
+/// dropped from storage on the next write.
+List<T> _rows<T>(Object? raw, T Function(Map<String, dynamic>) parse) {
+  final rows = <T>[];
+  for (final row in raw is List ? raw : const []) {
+    try {
+      rows.add(parse(row as Map<String, dynamic>));
+    } on Object {
+      continue;
+    }
+  }
+  return rows;
 }
 
 abstract class MendingStore {

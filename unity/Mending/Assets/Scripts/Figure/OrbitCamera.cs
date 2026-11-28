@@ -10,6 +10,8 @@ public class OrbitCamera : MonoBehaviour
 
     const float PitchMin = -89f;
     const float PitchMax = 32f;
+    const float DistanceMin = 0.3f;
+    const float DistanceMax = 18f;
 
     public void AddDelta(Vector2 pixelDelta)
     {
@@ -34,14 +36,14 @@ public class OrbitCamera : MonoBehaviour
     {
         yaw = nextYaw;
         pitch = Mathf.Clamp(nextPitch, PitchMin, PitchMax);
-        distance = Mathf.Clamp(nextDistance, 1.15f, 18f);
+        distance = Mathf.Clamp(nextDistance, DistanceMin, DistanceMax);
         var pivotBase = target != null ? target.position + Vector3.up * 0.05f : Vector3.up * 0.05f;
         lookOffset = worldPoint - pivotBase;
     }
 
     public void Zoom(float scroll)
     {
-        distance = Mathf.Clamp(distance - scroll * 0.01f, 1.15f, 18f);
+        distance = Mathf.Clamp(distance - scroll * 0.01f, DistanceMin, DistanceMax);
     }
 
     public void Snap()

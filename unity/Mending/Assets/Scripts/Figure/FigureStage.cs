@@ -88,7 +88,7 @@ public class FigureStage : MonoBehaviour
         if (shader == null)
             shader = Shader.Find("Standard");
         var material = new Material(shader);
-        var color = new Color(0.77f, 0.9f, 0.93f, 0.92f);
+        var color = new Color(0.48f, 0.54f, 0.58f, 0.92f);
         if (material.HasProperty("_BaseColor"))
             material.SetColor("_BaseColor", color);
         if (material.HasProperty("_Color"))

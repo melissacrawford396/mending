@@ -24,6 +24,11 @@ class AppModel extends ChangeNotifier {
   List<ReviewRow> reviews = [];
   String? skippedReviewSession;
 
+  /// Set after a guided session, once its celebration closes, so the Working
+  /// list can show the movement moving to Waiting. Cleared by
+  /// [clearJustCompleted].
+  String? justCompletedId;
+
   Future<void> load() async {
     final data = await store.load();
     if (!data.initialized) {
@@ -38,10 +43,9 @@ class AppModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  MyExercise? findExercise(String movementName) {
+  MyExercise? findExercise(String movementId) {
     for (final exercise in exercises) {
-      if (exercise.user == currentUser &&
-          exercise.movementName == movementName) {
+      if (exercise.user == currentUser && exercise.movementId == movementId) {
         return exercise;
       }
     }
@@ -59,43 +63,44 @@ class AppModel extends ChangeNotifier {
   }
 
   Future<void> setStarred(MovementType movement, bool starred) async {
-    final current = findExercise(movement.name) ?? MyExercise.from(movement);
-    await _saveExercise(current.copyWith(starred: starred));
+    await updateExercise(movement, (row) => row.copyWith(starred: starred));
   }
 
-  Future<void> setOverrides(
-    MovementType movement, {
-    required int? sets,
-    required int? reps,
-    required int? cooldown,
-  }) async {
-    final current = findExercise(movement.name) ?? MyExercise.from(movement);
-    await _saveExercise(
-      MyExercise(
-        user: current.user,
-        movementName: current.movementName,
-        setsOverride: sets,
-        repsOverride: reps,
-        cooldownOverride: cooldown,
-        starred: current.starred,
-      ),
-    );
+  Future<void> updateExercise(
+    MovementType movement,
+    MyExercise Function(MyExercise current) change,
+  ) async {
+    final current = findExercise(movement.id) ?? MyExercise.from(movement);
+    await _saveExercise(change(current));
   }
 
   Future<void> complete({
-    required String exerciseName,
+    required String movementId,
     required int sets,
     required int reps,
+    List<int>? setReps,
   }) async {
     final row = Completion(
       user: currentUser,
-      exerciseName: exerciseName,
+      movementId: movementId,
       completedAt: now(),
       sets: sets,
       reps: reps,
+      setReps: setReps,
     );
     await store.appendCompletion(row);
     completions = [...completions, row];
+    notifyListeners();
+  }
+
+  void showArrival(String movementId) {
+    justCompletedId = movementId;
+    notifyListeners();
+  }
+
+  void clearJustCompleted() {
+    if (justCompletedId == null) return;
+    justCompletedId = null;
     notifyListeners();
   }
 
@@ -116,8 +121,7 @@ class AppModel extends ChangeNotifier {
     final next = [...exercises];
     final index = next.indexWhere(
       (row) =>
-          row.user == exercise.user &&
-          row.movementName == exercise.movementName,
+          row.user == exercise.user && row.movementId == exercise.movementId,
     );
     if (index < 0) {
       next.add(exercise);

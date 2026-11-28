@@ -43,26 +43,26 @@ PendingReview? pendingReview({
   final key = sessionKeyFor(latest.completedAt);
   if (skippedSessionKey == key) return null;
 
-  final latestByName = <String, Completion>{};
+  final latestById = <String, Completion>{};
   for (final row in mine) {
     if (!sameLocalDay(row.completedAt, latest.completedAt)) continue;
-    final existing = latestByName[row.exerciseName];
+    final existing = latestById[row.movementId];
     if (existing == null || row.completedAt.isAfter(existing.completedAt)) {
-      latestByName[row.exerciseName] = row;
+      latestById[row.movementId] = row;
     }
   }
 
   final items = [
-    for (final row in latestByName.values)
+    for (final row in latestById.values)
       if (!_isReviewed(row, reviews, user)) row,
-  ]..sort((a, b) => a.exerciseName.compareTo(b.exerciseName));
+  ]..sort((a, b) => a.movementId.compareTo(b.movementId));
   if (items.isEmpty) return null;
   return PendingReview(sessionKey: key, items: items);
 }
 
 bool _isReviewed(Completion row, List<ReviewRow> reviews, String user) {
   for (final review in reviews) {
-    if (review.user != user || review.exerciseName != row.exerciseName) {
+    if (review.user != user || review.movementId != row.movementId) {
       continue;
     }
     if (review.exercisedAt.isAtSameMomentAs(row.completedAt)) return true;

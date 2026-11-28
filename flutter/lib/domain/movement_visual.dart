@@ -2,12 +2,20 @@
 /// `visuals/arch-roll.mp4`. Null until that file exists.
 class MovementVisual {
   const MovementVisual({
-    required this.movementName,
+    required this.movementId,
     this.representation,
     this.thumbnail,
   });
 
-  final String movementName;
+  factory MovementVisual.fromJson(Map<String, dynamic> json) {
+    return MovementVisual(
+      movementId: json['movementId'] as String,
+      representation: json['representation'] as String?,
+      thumbnail: json['thumbnail'] as String?,
+    );
+  }
+
+  final String movementId;
 
   /// The looping clip.
   final String? representation;

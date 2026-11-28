@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -5,7 +7,16 @@ import '../domain/body_area.dart';
 import 'figure_layout.dart';
 import 'theme.dart';
 
+/// The head's band in design units. The side slots sit level with it.
+const _headLeft = 36.0;
+const _headRight = 64.0;
+const _headTop = 2.0;
+const _headBottom = 30.0;
+const _slotGap = 6.0;
+
 /// Hover and selection live with the parent so a side panel can follow them.
+///
+/// Taps in the gaps between parts fall through to whatever is behind.
 class BodyFigure extends StatelessWidget {
   const BodyFigure({
     super.key,
@@ -14,6 +25,10 @@ class BodyFigure extends StatelessWidget {
     required this.selected,
     required this.onHover,
     required this.onSelected,
+    this.onDoubleSelected,
+    this.dimmed = false,
+    this.besideHeadLeft,
+    this.besideHeadRight,
   });
 
   final FigureSide side;
@@ -21,6 +36,13 @@ class BodyFigure extends StatelessWidget {
   final BodyArea? selected;
   final ValueChanged<BodyArea?> onHover;
   final ValueChanged<BodyArea> onSelected;
+
+  /// A second tap on the same part, inside the double-tap window. The first
+  /// tap has already gone to [onSelected].
+  final ValueChanged<BodyArea>? onDoubleSelected;
+  final bool dimmed;
+  final Widget? besideHeadLeft;
+  final Widget? besideHeadRight;
 
   @override
   Widget build(BuildContext context) {
@@ -35,28 +57,76 @@ class BodyFigure extends StatelessWidget {
           height = maxH;
           width = height * aspect;
         }
-        return Center(
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CustomPaint(
-                  painter: FigurePainter(
-                    side: side,
-                    hovered: hovered,
-                    selected: selected,
+        final left = (maxW - width) / 2;
+        final top = (maxH - height) / 2;
+        final size = Size(width, height);
+        final inset = figureStroke(size);
+        final head = mapDesignRect(
+          size,
+          const Rect.fromLTRB(_headLeft, _headTop, _headRight, _headBottom),
+          inset: inset,
+        );
+        final gap = _slotGap / figureWidth * width;
+        return SizedBox(
+          width: maxW,
+          height: maxH,
+          child: Stack(
+            children: [
+              Positioned(
+                left: left,
+                top: top,
+                width: width,
+                height: height,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CustomPaint(
+                      painter: FigurePainter(
+                        side: side,
+                        hovered: hovered,
+                        selected: selected,
+                        dimmed: dimmed,
+                      ),
+                    ),
+                    _Targets(
+                      side: side,
+                      size: size,
+                      onHover: onHover,
+                      onSelected: onSelected,
+                      onDoubleSelected: onDoubleSelected,
+                    ),
+                  ],
+                ),
+              ),
+              if (besideHeadLeft != null)
+                Positioned(
+                  left: 0,
+                  width: left + head.left - gap,
+                  top: top + head.top,
+                  height: head.height,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: besideHeadLeft,
+                    ),
                   ),
                 ),
-                _Targets(
-                  side: side,
-                  size: Size(width, height),
-                  onHover: onHover,
-                  onSelected: onSelected,
+              if (besideHeadRight != null)
+                Positioned(
+                  left: left + head.right + gap,
+                  right: 0,
+                  top: top + head.top,
+                  height: head.height,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: besideHeadRight,
+                    ),
+                  ),
                 ),
-              ],
-            ),
+            ],
           ),
         );
       },
@@ -70,12 +140,14 @@ class _Targets extends StatefulWidget {
     required this.size,
     required this.onHover,
     required this.onSelected,
+    this.onDoubleSelected,
   });
 
   final FigureSide side;
   final Size size;
   final ValueChanged<BodyArea?> onHover;
   final ValueChanged<BodyArea> onSelected;
+  final ValueChanged<BodyArea>? onDoubleSelected;
 
   @override
   State<_Targets> createState() => _TargetsState();
@@ -83,6 +155,32 @@ class _Targets extends StatefulWidget {
 
 class _TargetsState extends State<_Targets> {
   var _touch = false;
+  BodyArea? _lastArea;
+  Timer? _window;
+
+  @override
+  void dispose() {
+    _window?.cancel();
+    super.dispose();
+  }
+
+  void _tapped(BodyArea area) {
+    final onDouble = widget.onDoubleSelected;
+    if (onDouble != null && _window != null && _lastArea == area) {
+      _window!.cancel();
+      _window = null;
+      _lastArea = null;
+      onDouble(area);
+      return;
+    }
+    _window?.cancel();
+    _lastArea = area;
+    _window = Timer(kDoubleTapTimeout, () {
+      _window = null;
+      _lastArea = null;
+    });
+    widget.onSelected(area);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +211,7 @@ class _TargetsState extends State<_Targets> {
                       if (_touch) widget.onHover(null);
                     },
                     onTapUp: (_) {
-                      widget.onSelected(piece.area);
+                      _tapped(piece.area);
                       if (_touch) widget.onHover(null);
                     },
                   ),
@@ -126,13 +224,20 @@ class _TargetsState extends State<_Targets> {
 }
 
 class FigurePainter extends CustomPainter {
-  FigurePainter({required this.side, this.hovered, this.selected});
+  FigurePainter({
+    required this.side,
+    this.hovered,
+    this.selected,
+    this.dimmed = false,
+  });
 
   final FigureSide side;
   final BodyArea? hovered;
   final BodyArea? selected;
+  final bool dimmed;
 
-  bool get minimized => selected != null;
+  @override
+  bool? hitTest(Offset position) => false;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -151,7 +256,7 @@ class FigurePainter extends CustomPainter {
       if (isSelected) {
         fill = mendingBlue;
         label = Colors.white;
-      } else if (minimized) {
+      } else if (dimmed) {
         strokeColor = mendingInk.withValues(alpha: 0.35);
         if (isHovered) {
           fill = mendingBlue.withValues(alpha: 0.25);
@@ -223,11 +328,13 @@ class FigurePainter extends CustomPainter {
   bool shouldRepaint(FigurePainter oldDelegate) {
     return oldDelegate.side != side ||
         oldDelegate.hovered != hovered ||
-        oldDelegate.selected != selected;
+        oldDelegate.selected != selected ||
+        oldDelegate.dimmed != dimmed;
   }
 }
 
-/// Whole-body and Other, which are not drawn on the figure.
+/// Whole-body and Other, which are not drawn on the figure. Small pills that
+/// sit beside the head.
 class AreaControl extends StatefulWidget {
   const AreaControl({
     super.key,
@@ -235,12 +342,14 @@ class AreaControl extends StatefulWidget {
     required this.selected,
     required this.onHover,
     required this.onTap,
+    this.dimmed = false,
   });
 
   final String label;
   final bool selected;
   final ValueChanged<bool> onHover;
   final VoidCallback onTap;
+  final bool dimmed;
 
   @override
   State<AreaControl> createState() => _AreaControlState();
@@ -258,7 +367,8 @@ class _AreaControlState extends State<AreaControl> {
 
   @override
   Widget build(BuildContext context) {
-    final hot = widget.selected || hovered || pressed;
+    final hot = widget.selected || (!widget.dimmed && (hovered || pressed));
+    final ink = widget.dimmed ? mendingInk.withValues(alpha: 0.35) : mendingInk;
     return Semantics(
       button: true,
       selected: widget.selected,
@@ -288,20 +398,20 @@ class _AreaControlState extends State<AreaControl> {
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 80),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: hot ? mendingBlue : Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: mendingInk, width: 2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: hot ? mendingBlue : ink, width: 1.5),
             ),
             child: ExcludeSemantics(
               child: Text(
                 widget.label,
+                maxLines: 1,
                 style: TextStyle(
-                  color: hot ? Colors.white : mendingInk,
+                  color: hot ? Colors.white : ink,
                   fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontSize: 13,
                 ),
               ),
             ),
