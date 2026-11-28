@@ -148,7 +148,7 @@ public static class MovementLibrary
         keys.Add(Toes(1.2f, 0f, 0f, 32f));
         keys.Add(Toes(2.6f, 0f, 0f, -15f));
         keys.Add(Toes(3.8f, 0f, 0f, 0f));
-        return Clip("Toe flex", keys, 58f, -32f, 1.2f, "Toe.R.1", "Toe.R.2", "Toe.R.3", "Toe.R.4", "Toe.R.5");
+        return Clip("Toe flex", keys, 58f, -32f, 0.45f, "Toe.R.1", "Toe.R.2", "Toe.R.3", "Toe.R.4", "Toe.R.5");
     }
 
     static MovementClip.Key Toes(float time, float hipHinge, float hipRaise, float toe)

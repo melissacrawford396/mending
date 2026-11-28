@@ -11,6 +11,7 @@ class MovementType {
     required this.defaultCooldown,
     this.defaultPerDay = 1,
     this.defaultRestSeconds = 30,
+    this.timed = false,
     required this.description,
   });
 
@@ -25,6 +26,7 @@ class MovementType {
       defaultCooldown: json['defaultCooldown'] as int? ?? 1,
       defaultPerDay: json['defaultPerDay'] as int? ?? 1,
       defaultRestSeconds: json['defaultRestSeconds'] as int? ?? 30,
+      timed: json['timed'] as bool? ?? false,
       description: json['description'] as String? ?? '',
     );
   }
@@ -36,7 +38,7 @@ class MovementType {
   final int defaultSets;
   final int defaultReps;
 
-  /// Days until the 4 AM reset. 1 means every day.
+  /// Days between repeats. 1 means every day, which waits 18 hours.
   final int defaultCooldown;
 
   /// Times allowed within one day. Above 1, [defaultCooldown] is treated as 1.
@@ -44,5 +46,8 @@ class MovementType {
 
   /// Rest between sets.
   final int defaultRestSeconds;
+
+  /// The count is a hold in seconds, not a number of reps.
+  final bool timed;
   final String description;
 }

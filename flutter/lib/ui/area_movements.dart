@@ -387,8 +387,8 @@ class _MovementTile extends StatelessWidget {
       ),
       subtitle: Text(
         status == null
-            ? prescription(sets, reps, cooldown)
-            : '${prescription(sets, reps, cooldown)}\n$status',
+            ? prescription(sets, reps, cooldown, seconds: movement.timed)
+            : '${prescription(sets, reps, cooldown, seconds: movement.timed)}\n$status',
       ),
       isThreeLine: status != null,
       trailing: active && onTap == null

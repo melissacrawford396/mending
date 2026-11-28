@@ -46,7 +46,11 @@ void main() {
   });
 
   testWidgets('marking a movement done starts its countdown', (tester) async {
-    final model = await start(tester, now: () => DateTime(2026, 11, 25, 8));
+    final model = await start(
+      tester,
+      now: () => DateTime(2026, 11, 25, 8),
+      size: const Size(390, 1400),
+    );
     await tester.tap(find.text('Arch roll'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
@@ -78,7 +82,12 @@ void main() {
     expect(model.completions.single.movementId, 'arch-roll');
     expect(model.completions.single.sets, 1);
     expect(model.completions.single.reps, 10);
-    expect(find.text('Ready in 1d 20h'), findsWidgets);
+    expect(find.text('Arch roll done'), findsOneWidget);
+    expect(find.text('Back to list'), findsOneWidget);
+    await tester.tap(find.text('Back to list'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 4500));
+    expect(find.text('Ready in 1d 18h'), findsWidgets);
   });
 
   Future<void> openMovement(WidgetTester tester, String name) async {
@@ -123,7 +132,7 @@ void main() {
     );
   });
 
-  testWidgets('pulling past the end slides the page instead of stretching', (
+  testWidgets('pulling past the end stops within a tenth of the screen', (
     tester,
   ) async {
     await start(tester);
@@ -133,10 +142,21 @@ void main() {
     final list = find.byType(Scrollable).last;
     final position = tester.state<ScrollableState>(list).position;
     var physics = position.physics as ScrollPhysics?;
-    while (physics != null && physics is! BouncingScrollPhysics) {
+    while (physics != null && physics is! LimitedBouncingScrollPhysics) {
       physics = physics.parent;
     }
-    expect(physics, isA<BouncingScrollPhysics>());
+    expect(physics, isA<LimitedBouncingScrollPhysics>());
+
+    final limit =
+        position.viewportDimension *
+        LimitedBouncingScrollPhysics.overscrollFraction;
+    await tester.drag(list, const Offset(0, -4000));
+    expect(position.pixels, closeTo(position.maxScrollExtent + limit, 1));
+    await tester.pumpAndSettle();
+
+    await tester.drag(list, const Offset(0, 4000));
+    expect(position.pixels, closeTo(position.minScrollExtent - limit, 1));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('cooldown steps from every 7 days down to 3x a day', (
@@ -149,7 +169,7 @@ void main() {
     IconButton button(Finder finder) => tester.widget<IconButton>(finder);
 
     expect(find.text('every day'), findsOneWidget);
-    expect(find.text('Gap'), findsNothing);
+    expect(find.text('18 h apart'), findsOneWidget);
 
     await tester.tap(remove);
     await tester.pump();
@@ -176,8 +196,8 @@ void main() {
       await tester.pump();
     }
     expect(find.text('every 7 days'), findsOneWidget);
+    expect(find.text('162 h apart'), findsOneWidget);
     expect(button(add).onPressed, isNull);
-    expect(find.text('Gap'), findsNothing);
 
     await tester.tap(find.text('Use default'));
     await tester.pump();
@@ -193,6 +213,7 @@ void main() {
     final model = await start(
       tester,
       now: () => now,
+      size: const Size(390, 1400),
       initial: StoreData(
         initialized: true,
         exercises: seedExercises(testCatalog),
@@ -216,7 +237,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Set 1 of 2'), findsOneWidget);
-    expect(find.text('Do 1 rep'), findsOneWidget);
+    expect(find.text('0:00'), findsOneWidget);
+    expect(find.text('Hold 30 s'), findsOneWidget);
     await tester.tap(find.byKey(const Key('set-done')));
     await tester.pump();
     expect(find.text('Rest'), findsOneWidget);
@@ -235,16 +257,18 @@ void main() {
     expect(model.completions, hasLength(2));
     expect(model.completions.last.movementId, 'ankle-stretch');
     expect(model.completions.last.sets, 2);
+    expect(model.completions.last.setReps, [30, 30]);
+    expect(find.text('Back to list'), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 2500));
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Back to list'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+    expect(find.text('Move to waiting'), findsOneWidget);
     expect(find.text('Ankle stretch done'), findsNothing);
-    expect(find.text('Done'), findsOneWidget);
 
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
+    await tester.pump(const Duration(milliseconds: 4000));
     expect(model.justCompletedId, isNull);
+    expect(find.text('Move to waiting'), findsNothing);
     final waiting = tester.getTopLeft(find.text('Waiting')).dy;
     final toe = tester.getTopLeft(find.text('Toe flex')).dy;
     final ankle = tester.getTopLeft(find.text('Ankle stretch')).dy;
@@ -252,7 +276,7 @@ void main() {
     expect(ankle, greaterThan(toe));
   });
 
-  testWidgets('rest moves on by itself and leaving early logs nothing', (
+  testWidgets('rest stays at zero, can grow by 30s, and leaving logs nothing', (
     tester,
   ) async {
     var clock = DateTime(2026, 11, 25, 8);
@@ -270,8 +294,33 @@ void main() {
     await tester.tap(find.byKey(const Key('set-done')));
     await tester.pump();
     expect(find.text('Rest'), findsOneWidget);
-    clock = clock.add(const Duration(seconds: 31));
-    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('0:30'), findsOneWidget);
+    expect(find.text('0:00'), findsOneWidget);
+    final elapsed = tester.widget<Text>(find.byKey(const Key('rest-elapsed')));
+    expect(elapsed.style!.color!.a, lessThan(0.6));
+
+    clock = clock.add(const Duration(milliseconds: 500));
+    await tester.pump();
+    final ring = tester.widget<CircularProgressIndicator>(
+      find.byType(CircularProgressIndicator),
+    );
+    expect(ring.value, closeTo(29.5 / 30, 0.01));
+
+    clock = clock.add(const Duration(seconds: 30, milliseconds: 500));
+    await tester.pump();
+    expect(find.text('Set 2 of 2'), findsNothing);
+    expect(find.text('0:00'), findsOneWidget);
+    expect(find.text('0:31'), findsOneWidget);
+    expect(find.text('Next set'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('add-rest')));
+    await tester.pump();
+    expect(find.text('0:29'), findsOneWidget);
+    expect(find.text('0:31'), findsOneWidget);
+    expect(find.text('Skip rest'), findsOneWidget);
+
+    await tester.tap(find.text('Skip rest'));
+    await tester.pump();
     expect(find.text('Set 2 of 2'), findsOneWidget);
 
     await tester.pageBack();
@@ -283,6 +332,103 @@ void main() {
     expect(find.text('Set 2 of 2'), findsNothing);
     expect(find.text('Start exercise'), findsOneWidget);
     expect(model.completions, isEmpty);
+  });
+
+  testWidgets('done at 0 reps keeps the sets already finished', (tester) async {
+    final model = await start(tester, size: const Size(390, 1400));
+    await openMovement(tester, 'Ankle stretch');
+    await scrollTo(tester, find.text('Start exercise'));
+    await tester.tap(find.text('Start exercise'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    for (var i = 0; i < 6; i++) {
+      await tester.tap(find.byKey(const Key('session-reps-remove')));
+      await tester.pump();
+    }
+    await tester.pageBack();
+    await tester.pump();
+    expect(find.text('Save and finish'), findsNothing);
+    await tester.tap(find.text('Keep going'));
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Ankle stretch done'), findsNothing);
+    expect(find.text('Start exercise'), findsOneWidget);
+    expect(model.completions, isEmpty);
+
+    await tester.tap(find.text('Start exercise'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    await tester.tap(find.text('Skip rest'));
+    await tester.pump();
+    for (var i = 0; i < 6; i++) {
+      await tester.tap(find.byKey(const Key('session-reps-remove')));
+      await tester.pump();
+    }
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('1 set · 30 s'), findsOneWidget);
+    expect(model.completions.single.setReps, [30]);
+
+    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.pump(const Duration(milliseconds: 2000));
+  });
+
+  testWidgets('the back arrow can save the set on screen', (tester) async {
+    final model = await start(tester, size: const Size(390, 1400));
+    await openMovement(tester, 'Ankle stretch');
+    await scrollTo(tester, find.text('Start exercise'));
+    await tester.tap(find.text('Start exercise'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(find.byKey(const Key('session-reps-add')));
+    await tester.tap(find.byKey(const Key('session-reps-add')));
+    await tester.pump();
+    await tester.pageBack();
+    await tester.pump();
+    await tester.tap(find.text('Save and finish'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('1 set · 40 s'), findsOneWidget);
+    expect(model.completions.single.setReps, [40]);
+
+    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.pump(const Duration(milliseconds: 2000));
+  });
+
+  testWidgets('each set keeps its own rep count', (tester) async {
+    final model = await start(tester, size: const Size(390, 1400));
+    await openMovement(tester, 'Ankle stretch');
+    await scrollTo(tester, find.text('Start exercise'));
+    await tester.tap(find.text('Start exercise'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(find.byKey(const Key('session-reps-add')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    await tester.tap(find.text('Skip rest'));
+    await tester.pump();
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byKey(const Key('session-reps-add')));
+    }
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('2 sets · 35 s, 45 s'), findsOneWidget);
+    expect(model.completions.single.setReps, [35, 45]);
+
+    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.pump(const Duration(milliseconds: 2000));
   });
 
   testWidgets('a sets override can return to the default', (tester) async {

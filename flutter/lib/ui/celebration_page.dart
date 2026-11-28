@@ -1,25 +1,23 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../domain/completion.dart';
 import '../state/mending_scope.dart';
 import 'theme.dart';
 
-/// A short "you did it" after a session, then back to the first screen.
+/// A short "you did it" after a session. It stays until Back to list.
 class CelebrationPage extends StatefulWidget {
   const CelebrationPage({
     super.key,
     required this.movementId,
     required this.movementName,
-    required this.sets,
-    required this.reps,
+    required this.setReps,
   });
 
   final String movementId;
   final String movementName;
-  final int sets;
-  final int reps;
+  final List<int> setReps;
 
   @override
   State<CelebrationPage> createState() => _CelebrationPageState();
@@ -31,18 +29,10 @@ class _CelebrationPageState extends State<CelebrationPage>
     vsync: this,
     duration: const Duration(milliseconds: 1200),
   )..forward();
-  Timer? _autoBack;
   var _left = false;
 
   @override
-  void initState() {
-    super.initState();
-    _autoBack = Timer(const Duration(milliseconds: 2500), _back);
-  }
-
-  @override
   void dispose() {
-    _autoBack?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -65,8 +55,10 @@ class _CelebrationPageState extends State<CelebrationPage>
       parent: _controller,
       curve: const Interval(0.3, 0.8, curve: Curves.easeOut),
     );
-    final setLabel = widget.sets == 1 ? '1 set' : '${widget.sets} sets';
-    final repLabel = widget.reps == 1 ? '1 rep' : '${widget.reps} reps';
+    final timed =
+        MendingScope.of(context).catalog.find(widget.movementId)?.timed ??
+        false;
+    final summary = setsRepsLabel(widget.setReps, seconds: timed);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -116,7 +108,7 @@ class _CelebrationPageState extends State<CelebrationPage>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '$setLabel · $repLabel',
+                        summary,
                         style: TextStyle(
                           color: mendingInk.withValues(alpha: 0.72),
                           fontSize: 16,
@@ -166,4 +158,21 @@ class _BurstPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BurstPainter old) => old.t != t;
+}
+
+/// Fade into the celebration. Back to list returns to the Working list.
+Route<void> celebrationRoute({
+  required String movementId,
+  required String movementName,
+  required List<int> setReps,
+}) {
+  return PageRouteBuilder<void>(
+    pageBuilder: (_, _, _) => CelebrationPage(
+      movementId: movementId,
+      movementName: movementName,
+      setReps: setReps,
+    ),
+    transitionsBuilder: (_, animation, _, child) =>
+        FadeTransition(opacity: animation, child: child),
+  );
 }

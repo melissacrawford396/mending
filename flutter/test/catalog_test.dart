@@ -62,9 +62,13 @@ void main() {
       );
       expect(
         movement.defaultReps,
-        inInclusiveRange(1, maxReps),
+        inInclusiveRange(1, movement.timed ? maxHoldSeconds : maxReps),
         reason: reason,
       );
+      if (movement.id == 'ankle-stretch') {
+        expect(movement.timed, isTrue);
+        expect(movement.defaultReps, 30);
+      }
       expect(
         movement.defaultCooldown,
         inInclusiveRange(1, maxCooldownDays),

@@ -122,12 +122,14 @@ void main() {
     expect(model.findExercise('toe-flex')!.setsOverride, 3);
     expect(model.findExercise('toe-flex')!.restOverride, isNull);
     expect(model.completions.single.movementId, 'toe-flex');
+    expect(model.completions.single.setReps, [10, 10, 10]);
     expect(model.reviews.single.movementId, 'toe-flex');
 
     await model.complete(movementId: 'arch-roll', sets: 1, reps: 10);
     final prefs = await SharedPreferences.getInstance();
     final saved = jsonDecode(prefs.getString('mending.v1')!) as Map;
     expect(saved['schemaVersion'], storeSchemaVersion);
+    expect((saved['completions'] as List).last['setReps'], [10]);
     expect((saved['exercises'] as List).single['movementId'], 'toe-flex');
   });
 
@@ -156,6 +158,7 @@ void main() {
     expect(exercise.gapHoursOverride, isNull);
     expect(exercise.restOverride, isNull);
     expect(data.completions.single.movementId, 'arch-roll');
+    expect(data.completions.single.setReps, [10]);
     expect(data.reviews, isEmpty);
   });
 }

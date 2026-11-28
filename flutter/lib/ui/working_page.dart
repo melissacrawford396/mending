@@ -18,7 +18,7 @@ class WorkingPage extends StatefulWidget {
   State<WorkingPage> createState() => _WorkingPageState();
 }
 
-enum _Arrival { done, leaving, arriving }
+enum _Arrival { grey, notice, leaving, arriving }
 
 class _WorkingPageState extends State<WorkingPage> {
   Timer? _ticker;
@@ -26,6 +26,7 @@ class _WorkingPageState extends State<WorkingPage> {
   /// The movement just finished in a session. It shows as done in Ready
   /// first, then moves to the bottom of Waiting.
   String? _arrivingId;
+  var _notice = false;
   var _moved = false;
   final _arrivalTimers = <Timer>[];
   final _arrivingKey = GlobalKey();
@@ -52,28 +53,29 @@ class _WorkingPageState extends State<WorkingPage> {
     _arrivalTimers
       ..clear()
       ..add(
-        Timer(const Duration(milliseconds: 700), () {
+        Timer(const Duration(milliseconds: 800), () {
+          if (!mounted) return;
+          setState(() => _notice = true);
+        }),
+      )
+      ..add(
+        Timer(const Duration(milliseconds: 2800), () {
           if (!mounted) return;
           setState(() => _moved = true);
           WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _revealArriving(const Duration(milliseconds: 800)),
+            (_) => _revealArriving(const Duration(milliseconds: 1100)),
           );
         }),
       )
       ..add(
-        Timer(
-          const Duration(milliseconds: 1550),
-          () => _revealArriving(const Duration(milliseconds: 200)),
-        ),
-      )
-      ..add(
-        Timer(const Duration(milliseconds: 1600), () {
+        Timer(const Duration(milliseconds: 4200), () {
           if (!mounted) return;
           setState(() => _arrivingId = null);
           MendingScope.of(context).clearJustCompleted();
         }),
       );
     _arrivingId = id;
+    _notice = false;
     _moved = false;
   }
 
@@ -146,7 +148,7 @@ class _WorkingPageState extends State<WorkingPage> {
         waiting[arrivingIndex] = row.withArrival(_Arrival.arriving);
       } else {
         waiting.removeAt(arrivingIndex);
-        ready.add(row.withArrival(_Arrival.done));
+        ready.add(row.withArrival(_notice ? _Arrival.notice : _Arrival.grey));
       }
     }
     ready.sort(
@@ -224,13 +226,18 @@ class _AnimatedWorkTile extends StatelessWidget {
     switch (row.arrival) {
       case null:
         return _WorkTile(key: ValueKey(id), row: row);
-      case _Arrival.done:
-        return _WorkTile(key: ValueKey(id), row: row, highlight: 1, done: true);
+      case _Arrival.grey:
+      case _Arrival.notice:
+        return _FadedHold(
+          key: ValueKey(id),
+          message: row.arrival == _Arrival.notice,
+          child: _WorkTile(row: row, done: true),
+        );
       case _Arrival.leaving:
         return TweenAnimationBuilder<double>(
           key: ValueKey('leaving-$id'),
           tween: Tween(begin: 1, end: 0),
-          duration: const Duration(milliseconds: 450),
+          duration: const Duration(milliseconds: 700),
           curve: Curves.easeInCubic,
           builder: (context, t, child) => ClipRect(
             child: Align(
@@ -245,7 +252,7 @@ class _AnimatedWorkTile extends StatelessWidget {
         return TweenAnimationBuilder<double>(
           key: ValueKey('arriving-$id'),
           tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 800),
+          duration: const Duration(milliseconds: 1200),
           curve: Curves.easeOutCubic,
           builder: (context, t, _) => ClipRect(
             child: Align(
@@ -259,6 +266,47 @@ class _AnimatedWorkTile extends StatelessWidget {
           ),
         );
     }
+  }
+}
+
+/// Greys the finished row, then hovers "Move to waiting" over that spot.
+class _FadedHold extends StatelessWidget {
+  const _FadedHold({super.key, required this.message, required this.child});
+
+  final bool message;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Opacity(
+          opacity: 0.45,
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.color),
+            child: child,
+          ),
+        ),
+        if (message)
+          Material(
+            elevation: 8,
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Text(
+                'Move to waiting',
+                style: TextStyle(
+                  color: mendingInk,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -348,7 +396,7 @@ class _WorkTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${row.movement.area.label} · ${prescription(sets, reps, cooldown)}',
+                        '${row.movement.area.label} · ${prescription(sets, reps, cooldown, seconds: row.movement.timed)}',
                         style: TextStyle(
                           color: mendingInk.withValues(alpha: 0.72),
                           fontSize: 13,

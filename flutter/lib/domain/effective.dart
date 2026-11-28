@@ -4,7 +4,19 @@ import 'my_exercise.dart';
 const maxSets = 10;
 const maxReps = 50;
 const maxRestSeconds = 300;
-const maxGapHours = 12;
+
+/// Shortest and longest hold, and the step on a timed movement.
+const minHoldSeconds = 5;
+const maxHoldSeconds = 300;
+const holdStepSeconds = 5;
+
+/// Longest gap between repeats on the same day.
+const maxSameDayGapHours = 12;
+
+/// Longest gap the stepper allows. Same-day repeats stop at
+/// [maxSameDayGapHours]. Every N days can run 12 hours past its default.
+int maxGapHoursFor(int days, int perDay) =>
+    perDay > 1 ? maxSameDayGapHours : (days - 1) * 24 + 18 + maxSameDayGapHours;
 
 /// Most frequent step on the Cooldown scale.
 const maxPerDay = 3;
@@ -14,10 +26,17 @@ const maxCooldownDays = 7;
 
 /// How often a movement can repeat. With [perDay] above 1, [days] is 1.
 class Cooldown {
-  /// Without [gapHours], the gap splits about 16 waking hours: 8 hours for
-  /// twice a day, 4 for three times.
+  /// Without [gapHours], twice a day waits 8 hours and three times a day waits
+  /// 4. Every N days waits (N - 1) × 24 hours plus 18, counted from the last
+  /// completion.
   const Cooldown({this.days = 1, this.perDay = 1, int? gapHours})
-    : gapHours = gapHours ?? (perDay > 2 ? 4 : 8);
+    : gapHours =
+          gapHours ??
+          (perDay > 2
+              ? 4
+              : perDay > 1
+              ? 8
+              : (days - 1) * 24 + 18);
 
   /// Step [step] on the Cooldown scale. 0 is [maxPerDay] times a day and
   /// [lastStep] is every [maxCooldownDays] days.
@@ -57,8 +76,11 @@ class Cooldown {
 int effectiveSets(MovementType type, MyExercise? exercise) =>
     (exercise?.setsOverride ?? type.defaultSets).clamp(1, maxSets);
 
-int effectiveReps(MovementType type, MyExercise? exercise) =>
-    (exercise?.repsOverride ?? type.defaultReps).clamp(1, maxReps);
+int effectiveReps(MovementType type, MyExercise? exercise) {
+  final value = exercise?.repsOverride ?? type.defaultReps;
+  if (type.timed) return value.clamp(minHoldSeconds, maxHoldSeconds);
+  return value.clamp(1, maxReps);
+}
 
 int effectiveRest(MovementType type, MyExercise? exercise) =>
     (exercise?.restOverride ?? type.defaultRestSeconds).clamp(
@@ -78,13 +100,23 @@ Cooldown effectiveCooldown(MovementType type, MyExercise? exercise) {
   return Cooldown(
     days: perDay > 1 ? 1 : days,
     perDay: perDay,
-    gapHours: exercise?.gapHoursOverride?.clamp(1, maxGapHours),
+    gapHours: exercise?.gapHoursOverride?.clamp(
+      1,
+      maxGapHoursFor(days, perDay),
+    ),
   );
 }
 
-String prescription(int sets, int reps, Cooldown cooldown) {
+String prescription(
+  int sets,
+  int reps,
+  Cooldown cooldown, {
+  bool seconds = false,
+}) {
   final setLabel = sets == 1 ? '1 set' : '$sets sets';
-  final repLabel = reps == 1 ? '1 rep' : '$reps reps';
+  final repLabel = seconds
+      ? restLabel(reps)
+      : (reps == 1 ? '1 rep' : '$reps reps');
   return '$setLabel · $repLabel · ${cooldown.label}';
 }
 

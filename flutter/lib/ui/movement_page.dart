@@ -6,6 +6,7 @@ import '../domain/my_exercise.dart';
 import '../domain/readiness.dart';
 import '../state/app_model.dart';
 import '../state/mending_scope.dart';
+import 'celebration_page.dart';
 import 'count_pips.dart';
 import 'movement_visual_view.dart';
 import 'session_page.dart';
@@ -120,15 +121,25 @@ class MovementPage extends StatelessWidget {
             onReset: () => update((row) => row.copyWith(setsOverride: null)),
           ),
           _CountRow(
-            label: 'Reps',
-            value: CountPips(count: reps, shape: PipShape.triangle),
-            canRemove: reps > 1,
-            canAdd: reps < maxReps,
+            label: movement.timed ? 'Hold' : 'Reps',
+            value: movement.timed
+                ? _ValueText(restLabel(reps))
+                : CountPips(count: reps, shape: PipShape.triangle),
+            canRemove: movement.timed ? reps > minHoldSeconds : reps > 1,
+            canAdd: movement.timed ? reps < maxHoldSeconds : reps < maxReps,
             overridden: exercise.repsOverride != null,
             addKey: const Key('reps-add'),
             onChanged: (delta) => update(
               (row) => row.copyWith(
-                repsOverride: _override(reps + delta, movement.defaultReps),
+                repsOverride: _override(
+                  movement.timed
+                      ? (reps + delta * holdStepSeconds).clamp(
+                          minHoldSeconds,
+                          maxHoldSeconds,
+                        )
+                      : reps + delta,
+                  movement.defaultReps,
+                ),
               ),
             ),
             onReset: () => update((row) => row.copyWith(repsOverride: null)),
@@ -169,25 +180,29 @@ class MovementPage extends StatelessWidget {
               ),
             ),
           ),
-          if (cooldown.perDay > 1)
-            _CountRow(
-              label: 'Gap',
-              value: _ValueText('${cooldown.gapHours} h apart'),
-              canRemove: cooldown.gapHours > 1,
-              canAdd: cooldown.gapHours < maxGapHours,
-              overridden: exercise.gapHoursOverride != null,
-              addKey: const Key('gap-add'),
-              onChanged: (delta) => update(
-                (row) => row.copyWith(
-                  gapHoursOverride: _override(
-                    cooldown.gapHours + delta,
-                    Cooldown(perDay: cooldown.perDay).gapHours,
-                  ),
+          _CountRow(
+            label: 'Gap',
+            value: _ValueText('${cooldown.gapHours} h apart'),
+            canRemove: cooldown.gapHours > 1,
+            canAdd:
+                cooldown.gapHours <
+                maxGapHoursFor(cooldown.days, cooldown.perDay),
+            overridden: exercise.gapHoursOverride != null,
+            addKey: const Key('gap-add'),
+            onChanged: (delta) => update(
+              (row) => row.copyWith(
+                gapHoursOverride: _override(
+                  cooldown.gapHours + delta,
+                  Cooldown(
+                    days: cooldown.days,
+                    perDay: cooldown.perDay,
+                  ).gapHours,
                 ),
               ),
-              onReset: () =>
-                  update((row) => row.copyWith(gapHoursOverride: null)),
             ),
+            onReset: () =>
+                update((row) => row.copyWith(gapHoursOverride: null)),
+          ),
           const SizedBox(height: 8),
           Text(
             status.label,
@@ -215,7 +230,13 @@ class MovementPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           OutlinedButton(
-            onPressed: () => _markDone(context, model, sets: sets, reps: reps),
+            onPressed: () => _markDone(
+              context,
+              model,
+              sets: sets,
+              reps: reps,
+              seconds: movement.timed,
+            ),
             child: const Text('Mark done'),
           ),
         ],
@@ -228,18 +249,31 @@ class MovementPage extends StatelessWidget {
     AppModel model, {
     required int sets,
     required int reps,
+    required bool seconds,
   }) async {
     final result = await showModalBottomSheet<_DoneInput>(
       context: context,
       showDragHandle: true,
-      builder: (context) =>
-          _MarkDoneSheet(movementName: movement.name, sets: sets, reps: reps),
+      builder: (context) => _MarkDoneSheet(
+        movementName: movement.name,
+        sets: sets,
+        reps: reps,
+        seconds: seconds,
+      ),
     );
-    if (result == null) return;
+    if (result == null || !context.mounted) return;
     await model.complete(
       movementId: movement.id,
       sets: result.sets,
       reps: result.reps,
+    );
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      celebrationRoute(
+        movementId: movement.id,
+        movementName: movement.name,
+        setReps: List<int>.filled(result.sets, result.reps),
+      ),
     );
   }
 }
@@ -341,11 +375,13 @@ class _MarkDoneSheet extends StatefulWidget {
     required this.movementName,
     required this.sets,
     required this.reps,
+    required this.seconds,
   });
 
   final String movementName;
   final int sets;
   final int reps;
+  final bool seconds;
 
   @override
   State<_MarkDoneSheet> createState() => _MarkDoneSheetState();
@@ -379,9 +415,12 @@ class _MarkDoneSheetState extends State<_MarkDoneSheet> {
             onChanged: (value) => setState(() => sets = value),
           ),
           _SheetCount(
-            label: 'Reps',
+            label: widget.seconds ? 'Hold' : 'Reps',
             value: reps,
-            max: maxReps,
+            min: widget.seconds ? minHoldSeconds : 1,
+            max: widget.seconds ? maxHoldSeconds : maxReps,
+            step: widget.seconds ? holdStepSeconds : 1,
+            seconds: widget.seconds,
             onChanged: (value) => setState(() => reps = value),
           ),
           const SizedBox(height: 12),
@@ -405,11 +444,17 @@ class _SheetCount extends StatelessWidget {
     required this.value,
     required this.max,
     required this.onChanged,
+    this.min = 1,
+    this.step = 1,
+    this.seconds = false,
   });
 
   final String label;
   final int value;
+  final int min;
   final int max;
+  final int step;
+  final bool seconds;
   final ValueChanged<int> onChanged;
 
   @override
@@ -426,12 +471,15 @@ class _SheetCount extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: value > 1 ? () => onChanged(value - 1) : null,
+          onPressed: value > min ? () => onChanged(value - step) : null,
           icon: const Icon(Icons.remove),
         ),
-        Text('$value', style: const TextStyle(color: mendingInk, fontSize: 16)),
+        Text(
+          seconds ? restLabel(value) : '$value',
+          style: const TextStyle(color: mendingInk, fontSize: 16),
+        ),
         IconButton(
-          onPressed: value < max ? () => onChanged(value + 1) : null,
+          onPressed: value + step <= max ? () => onChanged(value + step) : null,
           icon: const Icon(Icons.add),
         ),
       ],

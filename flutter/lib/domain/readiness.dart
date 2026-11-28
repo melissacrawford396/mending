@@ -13,15 +13,17 @@ DateTime dayStartOf(DateTime time) {
 
 /// When the movement is ready again. Null when it has never been logged.
 ///
-/// Under the per-day limit it is ready after the gap, or at the next day's
-/// start if that comes first. At the limit it waits for the 4 AM start
-/// [Cooldown.days] days later.
+/// Every N days waits [Cooldown.gapHours] after the latest completion.
+/// Two or three times a day also wait that gap, but once the day's limit is
+/// reached they wait for the next 4 AM instead.
 DateTime? readyAt(Iterable<DateTime> completedTimes, Cooldown cooldown) {
   DateTime? latest;
   for (final time in completedTimes) {
     if (latest == null || time.isAfter(latest)) latest = time;
   }
   if (latest == null) return null;
+  final afterGap = latest.add(Duration(hours: cooldown.gapHours));
+  if (cooldown.perDay <= 1) return afterGap;
   final day = dayStartOf(latest);
   final doneThatDay = completedTimes.where((t) => dayStartOf(t) == day).length;
   final reset = DateTime(
@@ -31,7 +33,6 @@ DateTime? readyAt(Iterable<DateTime> completedTimes, Cooldown cooldown) {
     dayStartHour,
   );
   if (doneThatDay < cooldown.perDay) {
-    final afterGap = latest.add(Duration(hours: cooldown.gapHours));
     return afterGap.isBefore(reset) ? afterGap : reset;
   }
   return reset;

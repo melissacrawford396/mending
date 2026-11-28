@@ -86,11 +86,16 @@ void main() {
     );
   });
 
-  test('the gap defaults to 8 hours at 2x a day and 4 hours at 3x', () {
-    expect(const Cooldown(perDay: 2).gapHours, 8);
+  test('the gap follows the frequency', () {
     expect(const Cooldown(perDay: 3).gapHours, 4);
+    expect(const Cooldown(perDay: 2).gapHours, 8);
+    expect(const Cooldown().gapHours, 18);
+    expect(const Cooldown(days: 2).gapHours, 42);
+    expect(const Cooldown(days: 7).gapHours, 162);
     expect(Cooldown.atStep(0).label, '3x a day, 4 h apart');
     expect(Cooldown.atStep(1).label, '2x a day, 8 h apart');
+    expect(Cooldown.atStep(2).label, 'every day');
+    expect(Cooldown.atStep(3).label, 'every 2 days');
 
     final thrice = MyExercise(
       user: currentUser,
@@ -149,26 +154,27 @@ void main() {
     expect(status.label, 'Ready');
   });
 
-  test('once a day resets at the next 4 AM', () {
+  test('every day waits 18 hours from the last completion', () {
     const daily = Cooldown();
-    expect(readyAt([mon(21)], daily), tue(4));
-    expect(readyAt([tue(1)], daily), tue(4));
+    expect(readyAt([mon(21)], daily), tue(15));
+    expect(readyAt([tue(1)], daily), tue(19));
     expect(
       exerciseStatus(
         now: mon(22),
         completedTimes: [mon(21)],
         cooldown: daily,
       ).label,
-      'Ready in 6h 0m',
+      'Ready in 17h 0m',
     );
-    expect(isReady(tue(4), [mon(21)], daily), isTrue);
+    expect(isReady(tue(15), [mon(21)], daily), isTrue);
+    expect(isReady(tue(4), [mon(21)], daily), isFalse);
   });
 
-  test('every 2 days skips the next day', () {
+  test('every 2 days waits 42 hours from the last completion', () {
     const everyOther = Cooldown(days: 2);
-    expect(readyAt([mon(8)], everyOther), wed(4));
+    expect(readyAt([mon(8)], everyOther), wed(2));
     expect(isReady(tue(12), [mon(8)], everyOther), isFalse);
-    expect(isReady(wed(4), [mon(8)], everyOther), isTrue);
+    expect(isReady(wed(2), [mon(8)], everyOther), isTrue);
   });
 
   test('2 a day waits for the gap, then locks until 4 AM', () {

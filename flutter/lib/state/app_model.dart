@@ -78,6 +78,7 @@ class AppModel extends ChangeNotifier {
     required String movementId,
     required int sets,
     required int reps,
+    List<int>? setReps,
   }) async {
     final row = Completion(
       user: currentUser,
@@ -85,6 +86,7 @@ class AppModel extends ChangeNotifier {
       completedAt: now(),
       sets: sets,
       reps: reps,
+      setReps: setReps,
     );
     await store.appendCompletion(row);
     completions = [...completions, row];

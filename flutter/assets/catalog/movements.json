@@ -50,11 +50,12 @@
       "name": "Ankle stretch",
       "area": "ankles",
       "defaultSets": 2,
-      "defaultReps": 1,
+      "defaultReps": 30,
       "defaultCooldown": 1,
       "defaultPerDay": 1,
       "defaultRestSeconds": 30,
-      "description": "Step one foot in front of the other. Bend the front knee and keep the back foot flat on the ground. You should feel the stretch in the back foot's ankle, in the Achilles tendon. Switch which foot is back. Sets mean one held stretch per side."
+      "timed": true,
+      "description": "Step one foot in front of the other. Bend the front knee and keep the back foot flat on the ground. You should feel the stretch in the back foot's ankle, in the Achilles tendon. Hold, then switch which foot is back. Sets mean one hold per side, counted in seconds."
     }
   ]
 }
