@@ -21,6 +21,7 @@ class AppModel extends ChangeNotifier {
 
   List<MyExercise> exercises = [];
   List<Completion> completions = [];
+  List<DeletedCompletion> deleted = [];
   List<ReviewRow> reviews = [];
   String? skippedReviewSession;
 
@@ -37,10 +38,39 @@ class AppModel extends ChangeNotifier {
     } else {
       exercises = data.exercises;
     }
-    completions = List.of(data.completions);
-    reviews = List.of(data.reviews);
+    final completions = _withIds(data.completions);
+    final deleted = keptDeleted([
+      for (final row in data.deleted)
+        DeletedCompletion(
+          completion: _withId(row.completion),
+          deletedAt: row.deletedAt,
+        ),
+    ], now());
+    final reviews = List.of(data.reviews);
     skippedReviewSession = data.skippedReviewSession;
+    final missingId =
+        data.completions.any((row) => row.id.isEmpty) ||
+        data.deleted.any((row) => row.completion.id.isEmpty);
+    final purged = deleted.length != data.deleted.length;
+    this.completions = completions;
+    this.deleted = deleted;
+    this.reviews = reviews;
+    if (missingId || purged) {
+      await store.saveLog(
+        completions: completions,
+        deleted: deleted,
+        reviews: reviews,
+      );
+    }
     notifyListeners();
+  }
+
+  Completion _withId(Completion row) {
+    return row.id.isEmpty ? row.copyWith(id: newCompletionId()) : row;
+  }
+
+  List<Completion> _withIds(List<Completion> rows) {
+    return [for (final row in rows) _withId(row)];
   }
 
   MyExercise? findExercise(String movementId) {
@@ -81,6 +111,7 @@ class AppModel extends ChangeNotifier {
     List<int>? setReps,
   }) async {
     final row = Completion(
+      id: newCompletionId(),
       user: currentUser,
       movementId: movementId,
       completedAt: now(),
@@ -90,6 +121,91 @@ class AppModel extends ChangeNotifier {
     );
     await store.appendCompletion(row);
     completions = [...completions, row];
+    notifyListeners();
+  }
+
+  Future<void> updateCompletion(Completion next) async {
+    Completion? previous;
+    for (final row in completions) {
+      if (row.id == next.id) previous = row;
+    }
+    final prior = previous;
+    if (prior == null) return;
+    await _writeLog(
+      completions: [
+        for (final row in completions)
+          if (row.id == next.id) next else row,
+      ],
+      reviews: [
+        for (final review in reviews)
+          if (review.user == prior.user &&
+              review.movementId == prior.movementId &&
+              review.exercisedAt.isAtSameMomentAs(prior.completedAt))
+            review.copyWith(exercisedAt: next.completedAt)
+          else
+            review,
+      ],
+    );
+  }
+
+  Future<void> deleteCompletion(String id) async {
+    Completion? target;
+    for (final row in completions) {
+      if (row.id == id) target = row;
+    }
+    final row = target;
+    if (row == null) return;
+    await _writeLog(
+      completions: [
+        for (final item in completions)
+          if (item.id != id) item,
+      ],
+      deleted: [
+        ...deleted,
+        DeletedCompletion(completion: row, deletedAt: now()),
+      ],
+    );
+  }
+
+  Future<void> restoreCompletion(String id) async {
+    DeletedCompletion? target;
+    for (final row in deleted) {
+      if (row.completion.id == id) target = row;
+    }
+    final row = target;
+    if (row == null) return;
+    await _writeLog(
+      completions: [...completions, row.completion],
+      deleted: [
+        for (final item in deleted)
+          if (item.completion.id != id) item,
+      ],
+    );
+  }
+
+  /// Drops sessions that have been in Recently deleted for more than 7 days.
+  Future<void> purgeDeleted() async {
+    final kept = keptDeleted(deleted, now());
+    if (kept.length == deleted.length) return;
+    await _writeLog(deleted: kept);
+  }
+
+  Future<void> _writeLog({
+    List<Completion>? completions,
+    List<DeletedCompletion>? deleted,
+    List<ReviewRow>? reviews,
+  }) async {
+    final nextCompletions = completions ?? this.completions;
+    final nextDeleted = deleted ?? this.deleted;
+    final nextReviews = reviews ?? this.reviews;
+    await store.saveLog(
+      completions: nextCompletions,
+      deleted: nextDeleted,
+      reviews: nextReviews,
+    );
+    this.completions = nextCompletions;
+    this.deleted = nextDeleted;
+    this.reviews = nextReviews;
     notifyListeners();
   }
 

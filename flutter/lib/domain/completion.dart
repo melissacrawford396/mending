@@ -1,9 +1,21 @@
 import 'effective.dart';
 import 'my_exercise.dart';
 
-/// One append-only fact: you finished an exercise.
+var _nextCompletion = 0;
+
+/// Stable key for a logged session. Empty until the next load fills it in.
+String newCompletionId() {
+  _nextCompletion += 1;
+  return '${DateTime.now().microsecondsSinceEpoch}-$_nextCompletion';
+}
+
+/// How long a deleted session stays in Recently deleted.
+const deletedRetention = Duration(days: 7);
+
+/// One logged session of an exercise.
 class Completion {
   Completion({
+    this.id = '',
     required this.user,
     required this.movementId,
     required this.completedAt,
@@ -14,6 +26,7 @@ class Completion {
        setReps = List.unmodifiable(setReps ?? List<int>.filled(sets, reps)),
        sets = (setReps ?? List<int>.filled(sets, reps)).length;
 
+  final String id;
   final String user;
   final String movementId;
   final DateTime completedAt;
@@ -27,7 +40,26 @@ class Completion {
   /// Reps finished in each set, in order.
   final List<int> setReps;
 
+  Completion copyWith({
+    String? id,
+    DateTime? completedAt,
+    int? reps,
+    List<int>? setReps,
+  }) {
+    final nextSetReps = setReps ?? this.setReps;
+    return Completion(
+      id: id ?? this.id,
+      user: user,
+      movementId: movementId,
+      completedAt: completedAt ?? this.completedAt,
+      sets: nextSetReps.length,
+      reps: reps ?? this.reps,
+      setReps: nextSetReps,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
+    'id': id,
     'user': user,
     'movementId': movementId,
     'completedAt': completedAt.toUtc().toIso8601String(),
@@ -46,6 +78,7 @@ class Completion {
           if (item is int) item,
     ];
     return Completion(
+      id: json['id'] as String? ?? '',
       user: json['user'] as String? ?? currentUser,
       movementId: json['movementId'] as String,
       completedAt: DateTime.parse(json['completedAt'] as String),
@@ -54,6 +87,37 @@ class Completion {
       setReps: parsed.isEmpty ? null : parsed,
     );
   }
+}
+
+/// A session removed from the calendar, kept until [deletedRetention] ends.
+class DeletedCompletion {
+  const DeletedCompletion({required this.completion, required this.deletedAt});
+
+  final Completion completion;
+  final DateTime deletedAt;
+
+  Map<String, dynamic> toJson() => {
+    ...completion.toJson(),
+    'deletedAt': deletedAt.toUtc().toIso8601String(),
+  };
+
+  factory DeletedCompletion.fromJson(Map<String, dynamic> json) {
+    return DeletedCompletion(
+      completion: Completion.fromJson(json),
+      deletedAt: DateTime.parse(json['deletedAt'] as String),
+    );
+  }
+}
+
+/// Rows whose [DeletedCompletion.deletedAt] is still inside the window.
+List<DeletedCompletion> keptDeleted(
+  List<DeletedCompletion> rows,
+  DateTime now,
+) {
+  return [
+    for (final row in rows)
+      if (now.difference(row.deletedAt) <= deletedRetention) row,
+  ];
 }
 
 /// "2 sets · 10 reps", or "2 sets · 10, 8 reps" when the sets differ.

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../state/mending_scope.dart';
 import 'body_page.dart';
+import 'history_page.dart';
 import 'review_page.dart';
 import 'working_page.dart';
 
@@ -42,11 +45,16 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(title: const Text('Mending')),
       body: IndexedStack(
         index: index,
-        children: const [WorkingPage(), BodyPage()],
+        children: const [WorkingPage(), BodyPage(), HistoryPage()],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
-        onDestinationSelected: (value) => setState(() => index = value),
+        onDestinationSelected: (value) {
+          setState(() => index = value);
+          if (value == 2) {
+            unawaited(MendingScope.of(context).purgeDeleted());
+          }
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.star_border_rounded),
@@ -57,6 +65,11 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.accessibility_new_outlined),
             selectedIcon: Icon(Icons.accessibility_new_rounded),
             label: 'Body',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'History',
           ),
         ],
       ),

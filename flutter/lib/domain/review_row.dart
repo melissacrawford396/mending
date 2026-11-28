@@ -20,6 +20,17 @@ class ReviewRow {
   final DateTime exercisedAt;
   final Sensation sensation;
 
+  ReviewRow copyWith({DateTime? exercisedAt}) {
+    return ReviewRow(
+      user: user,
+      movementId: movementId,
+      area: area,
+      reviewedAt: reviewedAt,
+      exercisedAt: exercisedAt ?? this.exercisedAt,
+      sensation: sensation,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'user': user,
     'movementId': movementId,
