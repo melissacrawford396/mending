@@ -56,6 +56,104 @@
       "defaultRestSeconds": 30,
       "timed": true,
       "description": "Step one foot in front of the other. Bend the front knee and keep the back foot flat on the ground. You should feel the stretch in the back foot's ankle, in the Achilles tendon. Hold, then switch which foot is back. Sets mean one hold per side, counted in seconds."
+    },
+    {
+      "id": "high-plank",
+      "name": "High plank",
+      "area": "core",
+      "defaultSets": 2,
+      "defaultReps": 20,
+      "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
+      "timed": true,
+      "description": "Get on your hands and toes. Hands under your shoulders, arms straight, body in a line from your head to your heels. Brace your belly. Don't let your hips sag or pike up. Sets are holds, counted in seconds."
+    },
+    {
+      "id": "forearm-plank",
+      "name": "Forearm plank",
+      "area": "core",
+      "defaultSets": 2,
+      "defaultReps": 20,
+      "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
+      "timed": true,
+      "description": "Same line as a high plank, but on your forearms. Elbows under your shoulders. Brace your belly and keep your hips level. Sets are holds, counted in seconds."
+    },
+    {
+      "id": "dead-bug",
+      "name": "Dead bug",
+      "area": "core",
+      "defaultSets": 1,
+      "defaultReps": 10,
+      "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
+      "description": "Lie on your back with your arms toward the ceiling and your knees bent over your hips. Reach one arm straight behind your head and straighten the opposite leg, both hovering off the floor. Bring them back, then switch. Keep your lower back down. Reps mean one reach. Alternate sides."
+    },
+    {
+      "id": "leg-raises",
+      "name": "Leg raises",
+      "area": "core",
+      "defaultSets": 1,
+      "defaultReps": 10,
+      "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
+      "description": "Lie on your back with both legs straight and about an inch off the floor. Raise them together until they point up, then lower back to an inch. Don't set your heels down. Reps mean one raise and lower."
+    },
+    {
+      "id": "toe-touches",
+      "name": "Toe touches",
+      "area": "hips",
+      "defaultSets": 1,
+      "defaultReps": 10,
+      "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
+      "description": "Lie on your back with your legs straight and your arms out in a T. Keep one leg fairly straight and sweep it across toward the opposite hand. Alternate sides. Reps mean one sweep."
+    },
+    {
+      "id": "scorpion",
+      "name": "Scorpion",
+      "area": "hips",
+      "defaultSets": 1,
+      "defaultReps": 10,
+      "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 30,
+      "description": "Lie on your stomach with your legs straight and your arms out in a T. Bend one knee and reach that leg across toward the opposite hand. The knee bends. You will not keep the leg straight. Alternate sides. Reps mean one reach."
+    },
+    {
+      "id": "hip-circuit",
+      "name": "Hip circuit",
+      "area": "hips",
+      "defaultSets": 8,
+      "defaultReps": 10,
+      "defaultCooldown": 1,
+      "defaultPerDay": 1,
+      "defaultRestSeconds": 0,
+      "bothSides": true,
+      "description": "Start on your hands and knees for every move. Hands under your shoulders, knees under your hips. Do the whole list on one side, then switch sides. Each set is the next move. After kick back, dancer's leg is extra: kick the leg straight back, sweep it out to the side while keeping it straight, then return to straight back.",
+      "steps": [
+        {
+          "name": "Fire hydrant",
+          "cue": "Keep the knee bent and lift that leg out to the side until the thigh is about level. Lower it."
+        },
+        {
+          "name": "Knee circle",
+          "cue": "Lift the knee out to the side, carry it back behind you, then lower it to about an inch above the floor."
+        },
+        {
+          "name": "Reverse circle",
+          "cue": "Kick the leg back first, open it out to the side, then lower it to about an inch above the floor."
+        },
+        {
+          "name": "Kick back",
+          "cue": "Hover the knee about an inch off the floor, then kick the leg back until it is nearly straight. Bring it back."
+        }
+      ]
     }
   ]
 }

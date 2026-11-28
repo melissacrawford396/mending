@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../state/mending_scope.dart';
+import 'app_menu.dart';
 import 'body_page.dart';
 import 'history_page.dart';
 import 'review_page.dart';
@@ -42,7 +43,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mending')),
+      appBar: AppBar(
+        title: const Text('Mending'),
+        actions: const [AppMenuButton()],
+      ),
       body: IndexedStack(
         index: index,
         children: const [WorkingPage(), BodyPage(), HistoryPage()],

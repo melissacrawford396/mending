@@ -71,6 +71,8 @@ The records live in [flutter/assets/catalog/movements.json](flutter/assets/catal
 | Default per day | Times allowed in one day, 1 to 3. Above 1, cooldown is every day |
 | Default rest seconds | Rest between sets in a guided session. 0 skips the rest screen |
 | Description | How to do the movement |
+| Steps | Optional list of moves, each with a name and a cue. A session set is the next step. Empty means every set is this movement |
+| Both sides | When true, the session walks Steps on the left, then the same list on the right. Default sets is that full walk |
 
 Changing a default does not rewrite your overrides or past log rows.
 
@@ -104,7 +106,7 @@ This is a reference plus optional overrides. A factory creates it: `MyExercise.f
 | Rest override | Seconds. Empty means use the default |
 | Starred | Whether you are working on it |
 
-Effective sets are the override when it is set, otherwise the movement type default. The other fields resolve the same way. Sets are capped at 10 and reps at 50.
+Effective sets are the override when it is set, otherwise the movement type default. The other fields resolve the same way. Sets are capped at 10 and reps at 50. A movement with steps is capped at the length of its walk instead.
 
 Every day and every N days wait a gap measured from the last completion. Every day is 18 hours. Every N days is (N − 1) × 24 hours plus 18, so every 2 days is 42 hours and every 7 days is 162 hours. There is no 4 AM reset on these.
 
@@ -114,7 +116,7 @@ You can change any gap by an hour at a time, down to 1 hour. Same-day gaps stop 
 
 No log row means ready. On the movement page, one Cooldown stepper runs from 3x a day to every 7 days.
 
-**Start exercise** walks through the sets. A clock on the set counts up while you work. Each set starts at its prescribed reps, and the count can change before Done. A timed movement, such as Ankle stretch, uses a hold in seconds instead, stepping by 5 from 5 seconds to 5 minutes, starting at 30 seconds. Done at 0 ends the session with the sets already finished. Otherwise it records that count and, unless it was the last set, rests. The rest ring shrinks smoothly. A quieter count-up under it keeps running, and the page stays put when the countdown hits zero. Add 30s extends the rest. Skip rest, or Next set once the countdown is done, moves on. After the last set, or Save and finish from the back arrow, it logs one completion and shows a short celebration. The celebration stays until Back to list. Then, on the Working list, the row greys out where it was, a "Move to waiting" note hovers there, and the row moves to the bottom of Waiting. The celebration shows one rep count when every set matches, and the list when they differ. A timed movement shows seconds. End from the back arrow logs nothing. **Mark done** logs in one tap and plays the same celebration.
+**Start exercise** walks through the sets. A movement with steps titles each set with the step name and that step's cue. When both sides is set, the first half of the sets is the left side and the second half is the right. Fewer sets stops partway through that walk. A clock on the set counts up while you work. Each set starts at its prescribed reps, and the count can change before Done. A timed movement, such as Ankle stretch, uses a hold in seconds instead, stepping by 5 from 5 seconds to 5 minutes, starting at 30 seconds. Done at 0 ends the session with the sets already finished. Otherwise it records that count and, unless it was the last set, rests. The rest ring shrinks smoothly. A quieter count-up under it keeps running, and the page stays put when the countdown hits zero. Add 30s extends the rest. Skip rest, or Next set once the countdown is done, moves on. After the last set, or Save and finish from the back arrow, it logs one completion and shows a short celebration. The celebration stays until Back to list. Then, on the Working list, the row greys out where it was, a "Move to waiting" note hovers there, and the row moves to the bottom of Waiting. The celebration shows one rep count when every set matches, and the list when they differ. A timed movement shows seconds. End from the back arrow logs nothing. **Mark done** logs in one tap and plays the same celebration.
 
 You work from the starred rows. Each one shows its countdown. The ones whose cooldown has finished are ready.
 

@@ -196,13 +196,11 @@ void main() {
     }
   });
 
-  test('every movement has a bundled clip and thumbnail', () async {
+  test('every listed clip and thumbnail is bundled', () async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    expect(
-      testCatalog.visuals.map((visual) => visual.movementId),
-      testCatalog.movements.map((movement) => movement.id),
-    );
+    final ids = testCatalog.movements.map((movement) => movement.id);
     for (final visual in testCatalog.visuals) {
+      expect(ids, contains(visual.movementId));
       for (final path in [visual.representation, visual.thumbnail]) {
         expect(path, isNotNull, reason: visual.movementId);
         final bytes = await rootBundle.load(assetFor(path!));

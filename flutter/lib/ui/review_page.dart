@@ -44,11 +44,11 @@ class _ReviewPageState extends State<ReviewPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
             child: Text(
               'Did a body part hurt, or feel off? You can skip this. Skipping saves nothing.',
-              style: TextStyle(color: mendingInk, height: 1.35),
+              style: TextStyle(color: context.mending.ink, height: 1.35),
             ),
           ),
           Expanded(
@@ -60,7 +60,10 @@ class _ReviewPageState extends State<ReviewPage> {
                     name:
                         model.catalog.find(item.movementId)?.name ??
                         item.movementId,
-                    when: shortDate(item.completedAt),
+                    when: shortDate(
+                      item.completedAt,
+                      use24Hour: model.use24Hour,
+                    ),
                     answer: answers[item.movementId]!,
                     onChanged: () => setState(() {}),
                   ),
@@ -136,12 +139,12 @@ class _ReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: context.mending.surface,
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: mendingInk.withValues(alpha: 0.12)),
+        side: BorderSide(color: context.mending.ink.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -150,8 +153,8 @@ class _ReviewCard extends StatelessWidget {
           children: [
             Text(
               name,
-              style: const TextStyle(
-                color: mendingInk,
+              style: TextStyle(
+                color: context.mending.ink,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
@@ -159,12 +162,17 @@ class _ReviewCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               when,
-              style: TextStyle(color: mendingInk.withValues(alpha: 0.7)),
+              style: TextStyle(
+                color: context.mending.ink.withValues(alpha: 0.7),
+              ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'How it feels',
-              style: TextStyle(color: mendingInk, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: context.mending.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -183,9 +191,12 @@ class _ReviewCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Body part',
-              style: TextStyle(color: mendingInk, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: context.mending.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             DropdownButton<BodyArea>(
               value: answer.area,

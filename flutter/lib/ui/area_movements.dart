@@ -58,12 +58,14 @@ class AreaMovementsPanel extends StatelessWidget {
     final area = this.area;
     final controller = scrollController;
     final border = BorderSide(
-      color: active ? mendingBlue : mendingInk.withValues(alpha: 0.18),
+      color: active
+          ? context.mending.blue
+          : context.mending.ink.withValues(alpha: 0.18),
       width: 2,
     );
     if (controller != null) {
       return Material(
-        color: Colors.white,
+        color: context.mending.surface,
         clipBehavior: Clip.antiAlias,
         elevation: 6,
         shape: RoundedRectangleBorder(
@@ -83,7 +85,7 @@ class AreaMovementsPanel extends StatelessWidget {
       );
     }
     return Material(
-      color: Colors.white,
+      color: context.mending.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -135,7 +137,7 @@ class _SheetList extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               child: Text(
                 'No movements for ${area.label} yet.',
-                style: const TextStyle(color: mendingInk, fontSize: 16),
+                style: TextStyle(color: context.mending.ink, fontSize: 16),
               ),
             ),
           )
@@ -188,7 +190,7 @@ class _SheetHeader extends SliverPersistentHeaderDelegate {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: ColoredBox(
-        color: Colors.white,
+        color: context.mending.surface,
         child: Column(
           children: [
             SizedBox(height: handleGap),
@@ -196,7 +198,7 @@ class _SheetHeader extends SliverPersistentHeaderDelegate {
               width: height * 0.8,
               height: handleHeight,
               decoration: BoxDecoration(
-                color: mendingInk.withValues(alpha: 0.25),
+                color: context.mending.ink.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(handleHeight / 2),
               ),
             ),
@@ -214,7 +216,7 @@ class _SheetHeader extends SliverPersistentHeaderDelegate {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: mendingBlue,
+                          color: context.mending.blue,
                           fontSize: height * 0.36,
                           fontWeight: FontWeight.w800,
                         ),
@@ -262,7 +264,7 @@ class _Hint extends StatelessWidget {
         child: Text(
           'Point at a body part to see its movements.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: mendingInk.withValues(alpha: 0.6)),
+          style: TextStyle(color: context.mending.ink.withValues(alpha: 0.6)),
         ),
       ),
     );
@@ -287,7 +289,7 @@ class _AreaList extends StatelessWidget {
               child: Text(
                 'No movements for ${area.label} yet.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: mendingInk, fontSize: 16),
+                style: TextStyle(color: context.mending.ink, fontSize: 16),
               ),
             ),
           )
@@ -310,7 +312,7 @@ class _AreaList extends StatelessWidget {
                 child: Text(
                   area.label,
                   style: TextStyle(
-                    color: active ? mendingBlue : mendingInk,
+                    color: active ? context.mending.blue : context.mending.ink,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                   ),
@@ -330,7 +332,9 @@ class _AreaList extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
             child: Text(
               'Click to choose',
-              style: TextStyle(color: mendingInk.withValues(alpha: 0.55)),
+              style: TextStyle(
+                color: context.mending.ink.withValues(alpha: 0.55),
+              ),
             ),
           ),
         Expanded(
@@ -377,13 +381,16 @@ class _MovementTile extends StatelessWidget {
         : null;
     final starIcon = Icon(
       starred ? Icons.star_rounded : Icons.star_border_rounded,
-      color: starred ? mendingBlue : mendingInk,
+      color: starred ? context.mending.blue : context.mending.ink,
     );
     return ListTile(
       leading: MovementThumbnail(visual: model.catalog.visualFor(movement.id)),
       title: Text(
         movement.name,
-        style: const TextStyle(color: mendingInk, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: context.mending.ink,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       subtitle: Text(
         status == null

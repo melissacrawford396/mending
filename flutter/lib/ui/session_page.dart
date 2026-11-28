@@ -229,7 +229,7 @@ class _SessionPageState extends State<SessionPage>
                     onPressed: _done,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(56),
-                      textStyle: const TextStyle(
+                      textStyle: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                       ),
@@ -242,19 +242,61 @@ class _SessionPageState extends State<SessionPage>
     );
   }
 
+  /// Step name when this set is a circuit move. Otherwise "Set 1 of 2".
+  Widget _setHeading(int set) {
+    final step = widget.movement.stepForSet(set);
+    final side = widget.movement.sideForSet(set);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          step?.name ?? 'Set $set of ${widget.sets}',
+          style: TextStyle(
+            color: context.mending.ink,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        if (side != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            side,
+            style: TextStyle(
+              color: context.mending.ink,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        if (step != null && step.cue.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            step.cue,
+            style: TextStyle(
+              color: context.mending.ink,
+              height: 1.4,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _nextSetLabel(int set) {
+    final step = widget.movement.stepForSet(set);
+    if (step == null) return 'Next: set $set of ${widget.sets}';
+    final side = widget.movement.sideForSet(set);
+    if (side == null) return 'Next: ${step.name}';
+    return 'Next: ${step.name}, ${side.toLowerCase()}';
+  }
+
   Widget _setView(BuildContext context) {
     final model = MendingScope.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       children: [
-        Text(
-          'Set $_set of ${widget.sets}',
-          style: const TextStyle(
-            color: mendingInk,
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+        _setHeading(_set),
         const SizedBox(height: 12),
         MovementVisualView(visual: model.catalog.visualFor(widget.movement.id)),
         const SizedBox(height: 16),
@@ -262,8 +304,8 @@ class _SessionPageState extends State<SessionPage>
           _clock(_setElapsed().inSeconds),
           key: const Key('set-elapsed'),
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: mendingInk,
+          style: TextStyle(
+            color: context.mending.ink,
             fontSize: 40,
             fontWeight: FontWeight.w800,
             fontFeatures: [FontFeature.tabularFigures()],
@@ -275,8 +317,8 @@ class _SessionPageState extends State<SessionPage>
               ? 'Hold ${restLabel(widget.reps)}'
               : (widget.reps == 1 ? 'Do 1 rep' : 'Do ${widget.reps} reps'),
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: mendingInk,
+          style: TextStyle(
+            color: context.mending.ink,
             fontSize: 22,
             fontWeight: FontWeight.w700,
           ),
@@ -296,8 +338,8 @@ class _SessionPageState extends State<SessionPage>
             ),
             Text(
               widget.movement.timed ? restLabel(_reps) : '$_reps',
-              style: const TextStyle(
-                color: mendingInk,
+              style: TextStyle(
+                color: context.mending.ink,
                 fontSize: 40,
                 fontWeight: FontWeight.w800,
                 fontFeatures: [FontFeature.tabularFigures()],
@@ -328,10 +370,10 @@ class _SessionPageState extends State<SessionPage>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             'Rest',
             style: TextStyle(
-              color: mendingInk,
+              color: context.mending.ink,
               fontSize: 28,
               fontWeight: FontWeight.w800,
             ),
@@ -345,14 +387,14 @@ class _SessionPageState extends State<SessionPage>
                 CircularProgressIndicator(
                   value: progress.clamp(0.0, 1.0),
                   strokeWidth: 10,
-                  color: mendingBlue,
-                  backgroundColor: mendingBlue.withValues(alpha: 0.15),
+                  color: context.mending.blue,
+                  backgroundColor: context.mending.blue.withValues(alpha: 0.15),
                 ),
                 Center(
                   child: Text(
                     _clock(seconds),
-                    style: const TextStyle(
-                      color: mendingInk,
+                    style: TextStyle(
+                      color: context.mending.ink,
                       fontSize: 52,
                       fontWeight: FontWeight.w800,
                       fontFeatures: [FontFeature.tabularFigures()],
@@ -367,7 +409,7 @@ class _SessionPageState extends State<SessionPage>
             _clock(_elapsed().inSeconds),
             key: const Key('rest-elapsed'),
             style: TextStyle(
-              color: mendingInk.withValues(alpha: 0.4),
+              color: context.mending.ink.withValues(alpha: 0.4),
               fontSize: 22,
               fontWeight: FontWeight.w600,
               fontFeatures: const [FontFeature.tabularFigures()],
@@ -378,20 +420,17 @@ class _SessionPageState extends State<SessionPage>
             key: const Key('add-rest'),
             onPressed: _addRest,
             style: FilledButton.styleFrom(
-              backgroundColor: mendingBlue,
+              backgroundColor: context.mending.blue,
               foregroundColor: Colors.white,
               minimumSize: const Size(220, 56),
-              textStyle: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             child: const Text('Add 30s'),
           ),
           const SizedBox(height: 8),
           Text(
-            'Next: set ${_set + 1} of ${widget.sets}',
-            style: const TextStyle(color: mendingInk, fontSize: 18),
+            _nextSetLabel(_set + 1),
+            style: TextStyle(color: context.mending.ink, fontSize: 18),
           ),
         ],
       ),

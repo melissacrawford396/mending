@@ -158,13 +158,13 @@ class _WorkingPageState extends State<WorkingPage> {
     );
 
     if (ready.isEmpty && waiting.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Text(
             'Nothing starred yet. Choose a body area and star a movement.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: mendingInk, fontSize: 16),
+            style: TextStyle(color: context.mending.ink, fontSize: 16),
           ),
         ),
       );
@@ -291,14 +291,14 @@ class _FadedHold extends StatelessWidget {
         if (message)
           Material(
             elevation: 8,
-            color: Colors.white,
+            color: context.mending.surface,
             borderRadius: BorderRadius.circular(12),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Text(
                 'Move to waiting',
                 style: TextStyle(
-                  color: mendingInk,
+                  color: context.mending.ink,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -321,8 +321,8 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
       child: Text(
         text,
-        style: const TextStyle(
-          color: mendingInk,
+        style: TextStyle(
+          color: context.mending.ink,
           fontSize: 13,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.4,
@@ -357,8 +357,8 @@ class _WorkTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: Color.lerp(
-          Colors.white,
-          const Color(0xFFDCE7FD),
+          context.mending.surface,
+          context.mending.blue.withValues(alpha: 0.28),
           highlight.clamp(0.0, 1.0),
         ),
         borderRadius: BorderRadius.circular(16),
@@ -383,8 +383,8 @@ class _WorkTile extends StatelessWidget {
                     children: [
                       Text(
                         row.movement.name,
-                        style: const TextStyle(
-                          color: mendingInk,
+                        style: TextStyle(
+                          color: context.mending.ink,
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
@@ -393,24 +393,24 @@ class _WorkTile extends StatelessWidget {
                       Text(
                         '${row.movement.area.label} · ${prescription(sets, reps, cooldown, seconds: row.movement.timed)}',
                         style: TextStyle(
-                          color: mendingInk.withValues(alpha: 0.72),
+                          color: context.mending.ink.withValues(alpha: 0.72),
                           fontSize: 13,
                         ),
                       ),
                       const SizedBox(height: 8),
                       if (done)
-                        const Row(
+                        Row(
                           children: [
                             Icon(
                               Icons.check_circle_rounded,
                               size: 18,
-                              color: mendingBlue,
+                              color: context.mending.blue,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
                               'Done',
                               style: TextStyle(
-                                color: mendingBlue,
+                                color: context.mending.blue,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -420,7 +420,9 @@ class _WorkTile extends StatelessWidget {
                         Text(
                           row.status.label,
                           style: TextStyle(
-                            color: row.status.ready ? mendingBlue : mendingInk,
+                            color: row.status.ready
+                                ? context.mending.blue
+                                : context.mending.ink,
                             fontWeight: FontWeight.w800,
                           ),
                         ),

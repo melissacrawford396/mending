@@ -73,8 +73,12 @@ class Cooldown {
   int get hashCode => Object.hash(days, perDay, gapHours);
 }
 
+/// Most sets the stepper allows. A circuit stops at the end of its walk.
+int setCap(MovementType type) =>
+    type.steps.isEmpty ? maxSets : type.walkSets.clamp(1, maxSets);
+
 int effectiveSets(MovementType type, MyExercise? exercise) =>
-    (exercise?.setsOverride ?? type.defaultSets).clamp(1, maxSets);
+    (exercise?.setsOverride ?? type.defaultSets).clamp(1, setCap(type));
 
 int effectiveReps(MovementType type, MyExercise? exercise) {
   final value = exercise?.repsOverride ?? type.defaultReps;
