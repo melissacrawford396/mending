@@ -1,9 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mending/domain/body_area.dart';
 import 'package:mending/domain/effective.dart';
 import 'package:mending/domain/movement_type.dart';
 import 'package:mending/domain/my_exercise.dart';
 import 'package:mending/domain/readiness.dart';
+import 'package:mending/ui/body_area_icon.dart';
 import 'package:mending/ui/movement_visual_view.dart';
 
 import 'test_catalog.dart';
@@ -184,6 +186,14 @@ void main() {
     expect(isReady(mon(15), [mon(7)], twice), isTrue);
     expect(readyAt([mon(7), mon(15)], twice), tue(4));
     expect(readyAt([mon(23)], twice), tue(4));
+  });
+
+  test('every body area has an outline icon', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    for (final area in BodyArea.values) {
+      final bytes = await rootBundle.load(bodyIconAsset(area));
+      expect(bytes.lengthInBytes, greaterThan(0), reason: area.name);
+    }
   });
 
   test('every movement has a bundled clip and thumbnail', () async {

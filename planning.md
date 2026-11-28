@@ -84,7 +84,7 @@ Keyed by the movement type id. Holds how that movement is drawn. Swapping the pi
 | Representation | The clip. The movement page has a player: play, pause, and a seek bar. It loops and has no sound |
 | Thumbnail | A still from the clip. Shown in lists so you can see what you are picking |
 
-A movement with no clip shows a placeholder.
+A movement with no clip shows a placeholder. Each body area also has an outline icon in [body-icons/](body-icons/). The Working tab shows that icon, and the movement page shows it in the title bar.
 
 ### My exercises
 

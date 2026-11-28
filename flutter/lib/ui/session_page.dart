@@ -373,9 +373,19 @@ class _SessionPageState extends State<SessionPage>
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-          TextButton(
+          const SizedBox(height: 12),
+          FilledButton(
             key: const Key('add-rest'),
             onPressed: _addRest,
+            style: FilledButton.styleFrom(
+              backgroundColor: mendingBlue,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(220, 56),
+              textStyle: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             child: const Text('Add 30s'),
           ),
           const SizedBox(height: 8),

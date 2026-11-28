@@ -7,6 +7,7 @@ import '../domain/readiness.dart';
 import '../state/app_model.dart';
 import '../state/mending_scope.dart';
 import 'celebration_page.dart';
+import 'body_area_icon.dart';
 import 'count_pips.dart';
 import 'movement_visual_view.dart';
 import 'session_page.dart';
@@ -60,6 +61,7 @@ class MovementPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(movement.name),
         actions: [
+          BodyAreaIcon(area: movement.area, size: 32),
           IconButton(
             tooltip: exercise.starred ? 'Unstar' : 'Star',
             onPressed: () => model.setStarred(movement, !exercise.starred),

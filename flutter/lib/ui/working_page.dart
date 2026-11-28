@@ -7,8 +7,8 @@ import '../domain/movement_type.dart';
 import '../domain/my_exercise.dart';
 import '../domain/readiness.dart';
 import '../state/mending_scope.dart';
+import 'body_area_icon.dart';
 import 'movement_page.dart';
-import 'movement_visual_view.dart';
 import 'theme.dart';
 
 class WorkingPage extends StatefulWidget {
@@ -375,12 +375,7 @@ class _WorkTile extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                MovementThumbnail(
-                  visual: MendingScope.of(
-                    context,
-                  ).catalog.visualFor(row.movement.id),
-                  size: 64,
-                ),
+                BodyAreaIcon(area: row.movement.area, size: 64),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(

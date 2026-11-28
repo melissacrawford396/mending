@@ -9,6 +9,7 @@ import 'package:mending/domain/my_exercise.dart';
 import 'package:mending/domain/sensation.dart';
 import 'package:mending/main.dart';
 import 'package:mending/state/app_model.dart';
+import 'package:mending/ui/body_area_icon.dart';
 import 'package:mending/ui/body_figure.dart';
 import 'package:mending/ui/movement_visual_view.dart';
 
@@ -42,6 +43,7 @@ void main() {
     expect(find.text('Small shoulder circles'), findsOneWidget);
     expect(find.text('Large arm circles'), findsOneWidget);
     expect(find.text('Ankle stretch'), findsOneWidget);
+    expect(find.byType(BodyAreaIcon), findsNWidgets(5));
     expect(find.text('Ready'), findsWidgets);
   });
 
@@ -64,6 +66,13 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('lacrosse ball'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byTooltip('Feet'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.scrollUntilVisible(
       find.text('Mark done'),

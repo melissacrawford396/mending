@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_svg: ^2.5.1
   shared_preferences: ^2.5.6
   video_player: ^2.14.1
 
@@ -60,6 +61,7 @@ flutter:
   # one so make-thumbnails.sh stays out of the bundle.
   assets:
     - assets/catalog/
+    - assets/body-icons/
     - assets/visuals/arch-roll.mp4
     - assets/visuals/toe-flex.mp4
     - assets/visuals/small-shoulder-circles.mp4
