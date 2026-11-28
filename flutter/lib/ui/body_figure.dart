@@ -46,6 +46,7 @@ class BodyFigure extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.mending;
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxW = constraints.maxWidth;
@@ -86,6 +87,7 @@ class BodyFigure extends StatelessWidget {
                         hovered: hovered,
                         selected: selected,
                         dimmed: dimmed,
+                        colors: colors,
                       ),
                     ),
                     _Targets(
@@ -226,12 +228,14 @@ class _TargetsState extends State<_Targets> {
 class FigurePainter extends CustomPainter {
   FigurePainter({
     required this.side,
+    required this.colors,
     this.hovered,
     this.selected,
     this.dimmed = false,
   });
 
   final FigureSide side;
+  final MendingColors colors;
   final BodyArea? hovered;
   final BodyArea? selected;
   final bool dimmed;
@@ -252,19 +256,19 @@ class FigurePainter extends CustomPainter {
 
       Color? fill;
       Color? label;
-      var strokeColor = mendingInk;
+      var strokeColor = colors.ink;
       if (isSelected) {
-        fill = mendingBlue;
+        fill = colors.blue;
         label = Colors.white;
       } else if (dimmed) {
-        strokeColor = mendingInk.withValues(alpha: 0.35);
+        strokeColor = colors.ink.withValues(alpha: 0.35);
         if (isHovered) {
-          fill = mendingBlue.withValues(alpha: 0.25);
-          label = mendingInk;
+          fill = colors.blue.withValues(alpha: 0.25);
+          label = colors.ink;
         }
       } else if (target) {
-        fill = isHovered ? mendingBlue : Colors.white;
-        label = isHovered ? Colors.white : mendingInk;
+        fill = isHovered ? colors.blue : colors.figureFill;
+        label = isHovered ? Colors.white : colors.ink;
       }
 
       final stroke = Paint()
@@ -329,7 +333,8 @@ class FigurePainter extends CustomPainter {
     return oldDelegate.side != side ||
         oldDelegate.hovered != hovered ||
         oldDelegate.selected != selected ||
-        oldDelegate.dimmed != dimmed;
+        oldDelegate.dimmed != dimmed ||
+        oldDelegate.colors != colors;
   }
 }
 
@@ -367,8 +372,9 @@ class _AreaControlState extends State<AreaControl> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.mending;
     final hot = widget.selected || (!widget.dimmed && (hovered || pressed));
-    final ink = widget.dimmed ? mendingInk.withValues(alpha: 0.35) : mendingInk;
+    final ink = widget.dimmed ? colors.ink.withValues(alpha: 0.35) : colors.ink;
     return Semantics(
       button: true,
       selected: widget.selected,
@@ -400,9 +406,9 @@ class _AreaControlState extends State<AreaControl> {
             duration: const Duration(milliseconds: 80),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              color: hot ? mendingBlue : Colors.white,
+              color: hot ? colors.blue : colors.figureFill,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: hot ? mendingBlue : ink, width: 1.5),
+              border: Border.all(color: hot ? colors.blue : ink, width: 1.5),
             ),
             child: ExcludeSemantics(
               child: Text(

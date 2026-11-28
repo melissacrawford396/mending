@@ -67,7 +67,9 @@ class MovementPage extends StatelessWidget {
             onPressed: () => model.setStarred(movement, !exercise.starred),
             icon: Icon(
               exercise.starred ? Icons.star_rounded : Icons.star_border_rounded,
-              color: exercise.starred ? mendingBlue : mendingInk,
+              color: exercise.starred
+                  ? context.mending.blue
+                  : context.mending.ink,
             ),
           ),
         ],
@@ -93,26 +95,27 @@ class MovementPage extends StatelessWidget {
             label: const Text('Start exercise'),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
-              textStyle: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
+              textStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             movement.area.label,
-            style: const TextStyle(
-              color: mendingBlue,
+            style: TextStyle(
+              color: context.mending.blue,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 12),
           _CountRow(
             label: 'Sets',
-            value: CountPips(count: sets, shape: PipShape.circle),
+            value: CountPips(
+              count: sets,
+              shape: PipShape.circle,
+              color: context.mending.ink,
+            ),
             canRemove: sets > 1,
-            canAdd: sets < maxSets,
+            canAdd: sets < setCap(movement),
             overridden: exercise.setsOverride != null,
             addKey: const Key('sets-add'),
             onChanged: (delta) => update(
@@ -126,7 +129,11 @@ class MovementPage extends StatelessWidget {
             label: movement.timed ? 'Hold' : 'Reps',
             value: movement.timed
                 ? _ValueText(restLabel(reps))
-                : CountPips(count: reps, shape: PipShape.triangle),
+                : CountPips(
+                    count: reps,
+                    shape: PipShape.triangle,
+                    color: context.mending.ink,
+                  ),
             canRemove: movement.timed ? reps > minHoldSeconds : reps > 1,
             canAdd: movement.timed ? reps < maxHoldSeconds : reps < maxReps,
             overridden: exercise.repsOverride != null,
@@ -209,7 +216,7 @@ class MovementPage extends StatelessWidget {
           Text(
             status.label,
             style: TextStyle(
-              color: status.ready ? mendingBlue : mendingInk,
+              color: status.ready ? context.mending.blue : context.mending.ink,
               fontWeight: FontWeight.w800,
               fontSize: 16,
             ),
@@ -218,14 +225,16 @@ class MovementPage extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Doing this now restarts the countdown.',
-              style: TextStyle(color: mendingInk.withValues(alpha: 0.72)),
+              style: TextStyle(
+                color: context.mending.ink.withValues(alpha: 0.72),
+              ),
             ),
           ],
           const SizedBox(height: 16),
           Text(
             movement.description,
-            style: const TextStyle(
-              color: mendingInk,
+            style: TextStyle(
+              color: context.mending.ink,
               height: 1.4,
               fontSize: 16,
             ),
@@ -261,6 +270,7 @@ class MovementPage extends StatelessWidget {
         sets: sets,
         reps: reps,
         seconds: seconds,
+        maxSets: setCap(movement),
       ),
     );
     if (result == null || !context.mounted) return;
@@ -290,7 +300,7 @@ class _ValueText extends StatelessWidget {
     return Text(
       text,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(color: mendingInk, fontSize: 16),
+      style: TextStyle(color: context.mending.ink, fontSize: 16),
     );
   }
 }
@@ -332,8 +342,8 @@ class _CountRow extends StatelessWidget {
                 width: 108,
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: mendingInk,
+                  style: TextStyle(
+                    color: context.mending.ink,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -378,12 +388,14 @@ class _MarkDoneSheet extends StatefulWidget {
     required this.sets,
     required this.reps,
     required this.seconds,
+    required this.maxSets,
   });
 
   final String movementName;
   final int sets;
   final int reps;
   final bool seconds;
+  final int maxSets;
 
   @override
   State<_MarkDoneSheet> createState() => _MarkDoneSheetState();
@@ -403,8 +415,8 @@ class _MarkDoneSheetState extends State<_MarkDoneSheet> {
         children: [
           Text(
             'Mark ${widget.movementName} done',
-            style: const TextStyle(
-              color: mendingInk,
+            style: TextStyle(
+              color: context.mending.ink,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -413,7 +425,7 @@ class _MarkDoneSheetState extends State<_MarkDoneSheet> {
           _SheetCount(
             label: 'Sets',
             value: sets,
-            max: maxSets,
+            max: widget.maxSets,
             onChanged: (value) => setState(() => sets = value),
           ),
           _SheetCount(
@@ -466,8 +478,8 @@ class _SheetCount extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
-              color: mendingInk,
+            style: TextStyle(
+              color: context.mending.ink,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -478,7 +490,7 @@ class _SheetCount extends StatelessWidget {
         ),
         Text(
           seconds ? restLabel(value) : '$value',
-          style: const TextStyle(color: mendingInk, fontSize: 16),
+          style: TextStyle(color: context.mending.ink, fontSize: 16),
         ),
         IconButton(
           onPressed: value + step <= max ? () => onChanged(value + step) : null,

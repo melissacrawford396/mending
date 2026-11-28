@@ -285,6 +285,47 @@ void main() {
     expect(ankle, greaterThan(toe));
   });
 
+  testWidgets('a circuit names each set and walks one side first', (
+    tester,
+  ) async {
+    await start(
+      tester,
+      size: const Size(390, 1600),
+      initial: StoreData(
+        initialized: true,
+        exercises: [
+          MyExercise.from(testCatalog.byId('hip-circuit'), starred: true),
+        ],
+        completions: const [],
+        reviews: const [],
+        skippedReviewSession: null,
+      ),
+    );
+    await openMovement(tester, 'Hip circuit');
+    await scrollTo(tester, find.byKey(const Key('sets-add')));
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('sets-add'))).onPressed,
+      isNull,
+    );
+
+    await scrollTo(tester, find.text('Start exercise'));
+    await tester.tap(find.text('Start exercise'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Fire hydrant'), findsOneWidget);
+    expect(find.text('Left side'), findsOneWidget);
+    expect(find.textContaining('Keep the knee bent'), findsOneWidget);
+    expect(find.text('Set 1 of 8'), findsNothing);
+    expect(find.text('Do 10 reps'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('set-done')));
+    await tester.pump();
+    expect(find.text('Rest'), findsNothing);
+    expect(find.text('Knee circle'), findsOneWidget);
+    expect(find.text('Left side'), findsOneWidget);
+  });
+
   testWidgets('rest stays at zero, can grow by 30s, and leaving logs nothing', (
     tester,
   ) async {

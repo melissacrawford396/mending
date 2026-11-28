@@ -5,6 +5,7 @@ import 'data/store.dart';
 import 'state/app_model.dart';
 import 'state/mending_scope.dart';
 import 'ui/home_page.dart';
+import 'ui/login_page.dart';
 import 'ui/theme.dart';
 
 Future<void> main() async {
@@ -24,12 +25,27 @@ class MendingApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MendingScope(
       notifier: model,
-      child: MaterialApp(
-        title: 'Mending',
-        debugShowCheckedModeBanner: false,
-        theme: mendingTheme(),
-        scrollBehavior: const BouncingScrollBehavior(),
-        home: const HomePage(),
+      child: ListenableBuilder(
+        listenable: model,
+        builder: (context, _) {
+          return MaterialApp(
+            title: 'Mending',
+            debugShowCheckedModeBanner: false,
+            theme: mendingTheme(
+              model.darkMode ? MendingColors.dark : MendingColors.light,
+            ),
+            scrollBehavior: const BouncingScrollBehavior(),
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(alwaysUse24HourFormat: model.use24Hour),
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
+            home: model.signedIn ? const HomePage() : const LoginPage(),
+          );
+        },
       ),
     );
   }

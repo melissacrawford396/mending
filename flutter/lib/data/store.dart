@@ -17,6 +17,9 @@ class StoreData {
     this.deleted = const [],
     required this.reviews,
     required this.skippedReviewSession,
+    this.use24Hour = true,
+    this.darkMode = false,
+    this.signedIn = true,
   });
 
   static const empty = StoreData(
@@ -33,6 +36,9 @@ class StoreData {
   final List<DeletedCompletion> deleted;
   final List<ReviewRow> reviews;
   final String? skippedReviewSession;
+  final bool use24Hour;
+  final bool darkMode;
+  final bool signedIn;
 
   StoreData copyWith({
     bool? initialized,
@@ -41,6 +47,9 @@ class StoreData {
     List<DeletedCompletion>? deleted,
     List<ReviewRow>? reviews,
     Object? skippedReviewSession = _keep,
+    bool? use24Hour,
+    bool? darkMode,
+    bool? signedIn,
   }) {
     return StoreData(
       initialized: initialized ?? this.initialized,
@@ -51,6 +60,9 @@ class StoreData {
       skippedReviewSession: identical(skippedReviewSession, _keep)
           ? this.skippedReviewSession
           : skippedReviewSession as String?,
+      use24Hour: use24Hour ?? this.use24Hour,
+      darkMode: darkMode ?? this.darkMode,
+      signedIn: signedIn ?? this.signedIn,
     );
   }
 
@@ -62,6 +74,9 @@ class StoreData {
     'deleted': [for (final row in deleted) row.toJson()],
     'reviews': [for (final row in reviews) row.toJson()],
     'skippedReviewSession': skippedReviewSession,
+    'use24Hour': use24Hour,
+    'darkMode': darkMode,
+    'signedIn': signedIn,
   };
 
   factory StoreData.fromJson(Map<String, dynamic> raw) {
@@ -73,6 +88,9 @@ class StoreData {
       deleted: _rows(json['deleted'], DeletedCompletion.fromJson),
       reviews: _rows(json['reviews'], ReviewRow.fromJson),
       skippedReviewSession: json['skippedReviewSession'] as String?,
+      use24Hour: json['use24Hour'] as bool? ?? true,
+      darkMode: json['darkMode'] as bool? ?? false,
+      signedIn: json['signedIn'] as bool? ?? true,
     );
   }
 }
@@ -146,6 +164,12 @@ abstract class MendingStore {
     required List<DeletedCompletion> deleted,
     required List<ReviewRow> reviews,
   });
+
+  Future<void> saveSettings({
+    required bool use24Hour,
+    required bool darkMode,
+    required bool signedIn,
+  });
 }
 
 /// In-memory store for tests and the first frame before prefs load.
@@ -201,6 +225,20 @@ class MemoryMendingStore implements MendingStore {
     );
   }
 
+  @override
+  Future<void> saveSettings({
+    required bool use24Hour,
+    required bool darkMode,
+    required bool signedIn,
+  }) async {
+    _guard();
+    _cache = _cache.copyWith(
+      use24Hour: use24Hour,
+      darkMode: darkMode,
+      signedIn: signedIn,
+    );
+  }
+
   void _guard() {
     if (!_loaded) {
       throw StateError('Call load before writing the store');
@@ -216,6 +254,9 @@ StoreData _copy(StoreData data) {
     deleted: List.of(data.deleted),
     reviews: List.of(data.reviews),
     skippedReviewSession: data.skippedReviewSession,
+    use24Hour: data.use24Hour,
+    darkMode: data.darkMode,
+    signedIn: data.signedIn,
   );
 }
 
@@ -284,6 +325,21 @@ class PrefsMendingStore implements MendingStore {
       completions: List.of(completions),
       deleted: List.of(deleted),
       reviews: List.of(reviews),
+    );
+    await _write();
+  }
+
+  @override
+  Future<void> saveSettings({
+    required bool use24Hour,
+    required bool darkMode,
+    required bool signedIn,
+  }) async {
+    _guard();
+    _cache = _cache.copyWith(
+      use24Hour: use24Hour,
+      darkMode: darkMode,
+      signedIn: signedIn,
     );
     await _write();
   }

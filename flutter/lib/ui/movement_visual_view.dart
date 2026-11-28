@@ -96,7 +96,7 @@ class _MovementVisualViewState extends State<MovementVisualView> {
           decoration: BoxDecoration(
             color: const Color(0xFFE7ECF5),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: mendingInk, width: 2),
+            border: Border.all(color: context.mending.ink, width: 2),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(14),
@@ -164,9 +164,9 @@ class _Controls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: mendingInk, width: 2)),
+      decoration: BoxDecoration(
+        color: context.mending.surface,
+        border: Border(top: BorderSide(color: context.mending.ink, width: 2)),
       ),
       child: ValueListenableBuilder<VideoPlayerValue>(
         valueListenable: controller,
@@ -182,7 +182,7 @@ class _Controls extends StatelessWidget {
                   value.isPlaying
                       ? Icons.pause_rounded
                       : Icons.play_arrow_rounded,
-                  color: mendingInk,
+                  color: context.mending.ink,
                 ),
               ),
               Expanded(
@@ -190,8 +190,8 @@ class _Controls extends StatelessWidget {
                   controller,
                   allowScrubbing: true,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  colors: const VideoProgressColors(
-                    playedColor: mendingBlue,
+                  colors: VideoProgressColors(
+                    playedColor: context.mending.blue,
                     bufferedColor: Color(0xFFC9D3E6),
                     backgroundColor: Color(0xFFE7ECF5),
                   ),
@@ -200,8 +200,8 @@ class _Controls extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 '${_clock(value.position)} / ${_clock(value.duration)}',
-                style: const TextStyle(
-                  color: mendingInk,
+                style: TextStyle(
+                  color: context.mending.ink,
                   fontFeatures: [FontFeature.tabularFigures()],
                 ),
               ),
@@ -223,14 +223,21 @@ class _Placeholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.accessibility_new_rounded, size: 48, color: mendingInk),
-        SizedBox(height: 8),
+        Icon(
+          Icons.accessibility_new_rounded,
+          size: 48,
+          color: context.mending.ink,
+        ),
+        const SizedBox(height: 8),
         Text(
           'Visual later',
-          style: TextStyle(color: mendingInk, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: context.mending.ink,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -247,10 +254,13 @@ class MovementThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final thumbnail = visual.thumbnail;
-    const fallback = ColoredBox(
-      color: Color(0xFFE7ECF5),
+    final fallback = ColoredBox(
+      color: const Color(0xFFE7ECF5),
       child: Center(
-        child: Icon(Icons.accessibility_new_rounded, color: mendingInk),
+        child: Icon(
+          Icons.accessibility_new_rounded,
+          color: context.mending.ink,
+        ),
       ),
     );
     return SizedBox.square(

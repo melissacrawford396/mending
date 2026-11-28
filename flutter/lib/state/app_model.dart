@@ -24,6 +24,9 @@ class AppModel extends ChangeNotifier {
   List<DeletedCompletion> deleted = [];
   List<ReviewRow> reviews = [];
   String? skippedReviewSession;
+  var use24Hour = true;
+  var darkMode = false;
+  var signedIn = true;
 
   /// Set after a guided session, once its celebration closes, so the Working
   /// list can show the movement moving to Waiting. Cleared by
@@ -48,6 +51,9 @@ class AppModel extends ChangeNotifier {
     ], now());
     final reviews = List.of(data.reviews);
     skippedReviewSession = data.skippedReviewSession;
+    use24Hour = data.use24Hour;
+    darkMode = data.darkMode;
+    signedIn = data.signedIn;
     final missingId =
         data.completions.any((row) => row.id.isEmpty) ||
         data.deleted.any((row) => row.completion.id.isEmpty);
@@ -62,6 +68,39 @@ class AppModel extends ChangeNotifier {
         reviews: reviews,
       );
     }
+    notifyListeners();
+  }
+
+  /// Different local days that have a completion.
+  int daysLogged() {
+    final days = <String>{
+      for (final row in completions)
+        if (row.user == currentUser) prompt.sessionKeyFor(row.completedAt),
+    };
+    return days.length;
+  }
+
+  Future<void> setUse24Hour(bool value) => _saveSettings(use24Hour: value);
+
+  Future<void> setDarkMode(bool value) => _saveSettings(darkMode: value);
+
+  Future<void> signOut() => _saveSettings(signedIn: false);
+
+  Future<void> signIn() => _saveSettings(signedIn: true);
+
+  Future<void> _saveSettings({
+    bool? use24Hour,
+    bool? darkMode,
+    bool? signedIn,
+  }) async {
+    this.use24Hour = use24Hour ?? this.use24Hour;
+    this.darkMode = darkMode ?? this.darkMode;
+    this.signedIn = signedIn ?? this.signedIn;
+    await store.saveSettings(
+      use24Hour: this.use24Hour,
+      darkMode: this.darkMode,
+      signedIn: this.signedIn,
+    );
     notifyListeners();
   }
 

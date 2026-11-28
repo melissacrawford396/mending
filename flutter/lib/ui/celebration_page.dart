@@ -79,15 +79,18 @@ class _CelebrationPageState extends State<CelebrationPage>
                         animation: _controller,
                         builder: (context, _) => CustomPaint(
                           size: const Size.square(220),
-                          painter: _BurstPainter(_controller.value),
+                          painter: _BurstPainter(
+                            _controller.value,
+                            context.mending.blue,
+                          ),
                         ),
                       ),
                       ScaleTransition(
                         scale: pop,
-                        child: const Icon(
+                        child: Icon(
                           Icons.check_circle_rounded,
                           size: 120,
-                          color: mendingBlue,
+                          color: context.mending.blue,
                         ),
                       ),
                     ],
@@ -100,8 +103,8 @@ class _CelebrationPageState extends State<CelebrationPage>
                       Text(
                         '${widget.movementName} done',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: mendingInk,
+                        style: TextStyle(
+                          color: context.mending.ink,
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
                         ),
@@ -110,7 +113,7 @@ class _CelebrationPageState extends State<CelebrationPage>
                       Text(
                         summary,
                         style: TextStyle(
-                          color: mendingInk.withValues(alpha: 0.72),
+                          color: context.mending.ink.withValues(alpha: 0.72),
                           fontSize: 16,
                         ),
                       ),
@@ -133,9 +136,10 @@ class _CelebrationPageState extends State<CelebrationPage>
 
 /// Dots that fly out from the center and fade.
 class _BurstPainter extends CustomPainter {
-  _BurstPainter(this.t);
+  _BurstPainter(this.t, this.blue);
 
   final double t;
+  final Color blue;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -146,8 +150,9 @@ class _BurstPainter extends CustomPainter {
     for (var i = 0; i < count; i++) {
       final angle = i * 2 * math.pi / count;
       final distance = 60 + 45 * travel;
-      final color = (i.isEven ? mendingBlue : const Color(0xFFFFB020))
-          .withValues(alpha: fade);
+      final color = (i.isEven ? blue : const Color(0xFFFFB020)).withValues(
+        alpha: fade,
+      );
       canvas.drawCircle(
         center + Offset(math.cos(angle), math.sin(angle)) * distance,
         6 * (1 - 0.5 * travel),
@@ -157,7 +162,7 @@ class _BurstPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_BurstPainter old) => old.t != t;
+  bool shouldRepaint(_BurstPainter old) => old.t != t || old.blue != blue;
 }
 
 /// Fade into the celebration. Back to list returns to the Working list.

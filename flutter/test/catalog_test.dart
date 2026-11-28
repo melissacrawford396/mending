@@ -6,6 +6,7 @@ import 'package:mending/data/catalog.dart';
 import 'package:mending/data/catalog_source.dart';
 import 'package:mending/domain/body_area.dart';
 import 'package:mending/domain/effective.dart';
+import 'package:mending/domain/my_exercise.dart';
 
 import 'test_catalog.dart';
 
@@ -84,7 +85,43 @@ void main() {
         inInclusiveRange(0, maxRestSeconds),
         reason: reason,
       );
+      if (movement.steps.isNotEmpty) {
+        expect(movement.defaultSets, movement.walkSets, reason: reason);
+      }
     }
+  });
+
+  test('the hip circuit walks each move on the left, then the right', () {
+    final hip = testCatalog.byId('hip-circuit');
+    expect(hip.bothSides, isTrue);
+    expect(hip.steps.map((step) => step.name), [
+      'Fire hydrant',
+      'Knee circle',
+      'Reverse circle',
+      'Kick back',
+    ]);
+    expect(hip.defaultSets, 8);
+    expect(hip.defaultRestSeconds, 0);
+    expect(hip.stepForSet(1)?.name, 'Fire hydrant');
+    expect(hip.sideForSet(1), 'Left side');
+    expect(hip.stepForSet(4)?.name, 'Kick back');
+    expect(hip.sideForSet(4), 'Left side');
+    expect(hip.stepForSet(5)?.name, 'Fire hydrant');
+    expect(hip.sideForSet(5), 'Right side');
+    expect(hip.stepForSet(8)?.name, 'Kick back');
+    expect(hip.sideForSet(9), isNull);
+    expect(
+      effectiveSets(
+        hip,
+        MyExercise(
+          user: currentUser,
+          movementId: hip.id,
+          setsOverride: 99,
+          starred: false,
+        ),
+      ),
+      hip.walkSets,
+    );
   });
 
   test('missing optional fields use defaults and unknown ones are ignored', () {
@@ -104,6 +141,9 @@ void main() {
     expect(movement.defaultPerDay, 1);
     expect(movement.defaultRestSeconds, 30);
     expect(movement.description, isEmpty);
+    expect(movement.steps, isEmpty);
+    expect(movement.bothSides, isFalse);
+    expect(movement.stepForSet(1), isNull);
     expect(catalog.visualFor('neck-roll').representation, isNull);
   });
 
