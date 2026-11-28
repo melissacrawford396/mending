@@ -115,7 +115,7 @@ void main() {
     expect(find.byType(HistoryMark), findsOneWidget);
   });
 
-  testWidgets('several circles on a day open that week', (tester) async {
+  testWidgets('several circles on a day open that day', (tester) async {
     await start(
       tester,
       logged([
@@ -156,8 +156,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('history-day-2026-11-25')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byKey(const Key('history-week')), findsOneWidget);
-    expect(find.text('Nov 22 – 28'), findsOneWidget);
+    expect(find.byKey(const Key('history-day-zoom')), findsOneWidget);
+    expect(find.text('Nov 25'), findsOneWidget);
     expect(find.text('08:00'), findsOneWidget);
     expect(find.text('09:00'), findsOneWidget);
     expect(find.text('Save'), findsNothing);

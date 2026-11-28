@@ -182,7 +182,7 @@ class _HistoryPageState extends State<HistoryPage> {
     }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => HistoryWeekPage(anchor: day, movementId: _movementId),
+        builder: (_) => HistoryDayPage(day: day, movementId: _movementId),
       ),
     );
   }
@@ -244,104 +244,36 @@ class _DeletedList extends StatelessWidget {
   }
 }
 
-/// Month of [anchor], then the week that contains it, with a larger circle
-/// for each session that day.
-class HistoryWeekPage extends StatelessWidget {
-  const HistoryWeekPage({super.key, required this.anchor, this.movementId});
+/// The sessions on [day], each circle large enough to select on its own.
+class HistoryDayPage extends StatelessWidget {
+  const HistoryDayPage({super.key, required this.day, this.movementId});
 
-  final DateTime anchor;
+  final DateTime day;
   final String? movementId;
 
   @override
   Widget build(BuildContext context) {
     final model = MendingScope.of(context);
-    final start = _weekStart(anchor);
-    final byDay = _byDay(model.completions, movementId: movementId);
+    final rows =
+        _byDay(model.completions, movementId: movementId)[sessionKeyFor(day)] ??
+        const <Completion>[];
     final byArea = movementId == null;
     return Scaffold(
-      key: const Key('history-week'),
-      appBar: AppBar(title: Text(_weekTitle(start))),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      key: const Key('history-day-zoom'),
+      appBar: AppBar(title: Text(_dayTitle(day))),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
-          for (var i = 0; i < 7; i++)
-            Expanded(
-              child: _WeekColumn(
-                day: start.add(Duration(days: i)),
-                rows:
-                    byDay[sessionKeyFor(start.add(Duration(days: i)))] ??
-                    const [],
-                selected: _sameDay(start.add(Duration(days: i)), anchor),
-                byArea: byArea,
-                model: model,
-              ),
-            ),
+          for (final row in rows)
+            _DaySession(row: row, byArea: byArea, model: model),
         ],
       ),
     );
   }
 }
 
-class _WeekColumn extends StatelessWidget {
-  const _WeekColumn({
-    required this.day,
-    required this.rows,
-    required this.selected,
-    required this.byArea,
-    required this.model,
-  });
-
-  final DateTime day;
-  final List<Completion> rows;
-  final bool selected;
-  final bool byArea;
-  final AppModel model;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(color: mendingInk.withValues(alpha: 0.08)),
-        ),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          Text(
-            _weekdays[day.weekday % 7],
-            style: TextStyle(
-              color: mendingInk.withValues(alpha: 0.55),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            '${day.day}',
-            style: TextStyle(
-              color: selected ? mendingBlue : mendingInk,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              children: [
-                for (final row in rows) ...[
-                  const SizedBox(height: 10),
-                  _WeekMark(row: row, byArea: byArea, model: model),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WeekMark extends StatelessWidget {
-  const _WeekMark({
+class _DaySession extends StatelessWidget {
+  const _DaySession({
     required this.row,
     required this.byArea,
     required this.model,
@@ -354,26 +286,47 @@ class _WeekMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final local = row.completedAt.toLocal();
+    final movement = model.catalog.find(row.movementId);
     return InkWell(
       onTap: () => showHistoryEditor(context, row),
-      child: Column(
-        children: [
-          HistoryMark(color: _markColor(model, row, byArea: byArea), size: 22),
-          if (byArea) ...[
-            const SizedBox(height: 4),
-            Text(
-              _movementName(model, row.movementId),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: mendingInk, fontSize: 10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          children: [
+            HistoryMark(
+              color: _markColor(model, row, byArea: byArea),
+              size: 36,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (byArea)
+                    Text(
+                      _movementName(model, row.movementId),
+                      style: const TextStyle(
+                        color: mendingInk,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  Text(
+                    _clock(local.hour, local.minute),
+                    style: const TextStyle(color: mendingInk, fontSize: 16),
+                  ),
+                  Text(
+                    setsRepsLabel(
+                      row.setReps,
+                      seconds: movement?.timed ?? false,
+                    ),
+                    style: TextStyle(color: mendingInk.withValues(alpha: 0.72)),
+                  ),
+                ],
+              ),
             ),
           ],
-          Text(
-            _clock(local.hour, local.minute),
-            style: const TextStyle(color: mendingInk, fontSize: 11),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -733,17 +686,8 @@ DateTime _weekStart(DateTime day) {
   return date.subtract(Duration(days: date.weekday % 7));
 }
 
-bool _sameDay(DateTime a, DateTime b) {
-  return a.year == b.year && a.month == b.month && a.day == b.day;
-}
-
-String _weekTitle(DateTime start) {
-  final end = start.add(const Duration(days: 6));
-  final left = '${_shortMonths[start.month - 1]} ${start.day}';
-  final right = start.month == end.month
-      ? '${end.day}'
-      : '${_shortMonths[end.month - 1]} ${end.day}';
-  return '$left – $right';
+String _dayTitle(DateTime day) {
+  return '${_shortMonths[day.month - 1]} ${day.day}';
 }
 
 String _clock(int hour, int minute) {
